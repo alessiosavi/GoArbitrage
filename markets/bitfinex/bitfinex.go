@@ -21,8 +21,8 @@ const BITFINEX_PAIRS_URL string = `https://api.bitfinex.com/v1/symbols`
 const BITFINEX_PAIRS_DETAILS_URL string = `https://api.bitfinex.com/v1/symbols_details`
 const BITFINEX_ORDER_BOOK_URL string = `https://api.bitfinex.com/v1/book/`
 
-var BITFINEX_PAIRS_DATA string = path.Join(constants.BITFINEX_PATH, "pairs_list.txt")
-var BITFINEX_PAIRS_DETAILS string = path.Join(constants.BITFINEX_PATH, "pairs_info.txt")
+var BITFINEX_PAIRS_DATA string = path.Join(constants.BITFINEX_PATH, "pairs_list.json")
+var BITFINEX_PAIRS_DETAILS string = path.Join(constants.BITFINEX_PATH, "pairs_info.json")
 var BITFINEX_ORDERBOOK_DATA string = path.Join(constants.BITFINEX_PATH, "orders/")
 
 type Bitfinex struct {
@@ -134,7 +134,7 @@ func (b *Bitfinex) GetOrderBook() {
 		}
 		var orderbook datastructure.BitfinexOrderBook
 		orderbook.Pair = pair
-		file_data := path.Join(BITFINEX_ORDERBOOK_DATA, pair+".txt")
+		file_data := path.Join(BITFINEX_ORDERBOOK_DATA, pair+".json")
 		// Avoid to call the HTTP api if the data are present
 		if fileutils.FileExists(file_data) {
 			zap.S().Debugw("[" + pair + "] Data alredy present, avoiding to call the service")
@@ -158,7 +158,6 @@ func (b *Bitfinex) GetOrderBook() {
 				continue
 			}
 
-			zap.S().Debugw("Response -> " + resp.Dump())
 			data = resp.Body
 
 		}
@@ -177,7 +176,7 @@ func (b *Bitfinex) GetOrderBook() {
 	b.OrderBook = orders
 
 	// Update the file with the new data
-	utils.DumpStruct(b.OrderBook, path.Join(constants.BITFINEX_PATH, "orders_all.txt"))
+	utils.DumpStruct(b.OrderBook, path.Join(constants.BITFINEX_PATH, "orders_all.json"))
 }
 
 func (b *Bitfinex) SetFees() {

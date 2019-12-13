@@ -25,8 +25,8 @@ import (
 const OKCOIN_PAIRS_URL string = `https://www.okcoin.com/api/spot/v3/instruments/ticker`
 const OKCOIN_PAIRS_DETAILS_URL string = `https://www.okcoin.com/api/spot/v3/instruments/`
 
-var OKCOIN_PAIRS_DATA string = path.Join(constants.OKCOIN_PATH, "pairs_list.txt")
-var OKCOIN_PAIRS_DETAILS string = path.Join(constants.OKCOIN_PATH, "pairs_info.txt")
+var OKCOIN_PAIRS_DATA string = path.Join(constants.OKCOIN_PATH, "pairs_list.json")
+var OKCOIN_PAIRS_DETAILS string = path.Join(constants.OKCOIN_PATH, "pairs_info.json")
 var OKCOIN_ORDERBOOK_DATA string = path.Join(constants.OKCOIN_PATH, "orders/")
 
 type OkCoin struct {
@@ -168,7 +168,7 @@ func (ok *OkCoin) GetOrderBook() {
 		}
 		var orderbook datastructure.OkCoinOrderBook
 		orderbook.Pair = pair
-		file_data := path.Join(OKCOIN_ORDERBOOK_DATA, pair+".txt")
+		file_data := path.Join(OKCOIN_ORDERBOOK_DATA, pair+".json")
 		// Avoid to call the HTTP api if the data are present
 		if fileutils.FileExists(file_data) {
 			zap.S().Debugw("[" + pair + "] Data alredy present, avoiding to call the service")
@@ -211,5 +211,5 @@ func (ok *OkCoin) GetOrderBook() {
 	ok.OrderBook = orders
 
 	// Update the file with the new data
-	utils.DumpStruct(ok.OrderBook, path.Join(constants.OKCOIN_PATH, "orders_all.txt"))
+	utils.DumpStruct(ok.OrderBook, path.Join(constants.OKCOIN_PATH, "orders_all.json"))
 }
