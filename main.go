@@ -1,9 +1,13 @@
 package main
 
 import (
-	"log"
+	"os"
 
+	constants "github.com/alessiosavi/GoArbitrage/datastructure"
+	"github.com/alessiosavi/GoArbitrage/markets/bitfinex"
+	"github.com/alessiosavi/GoArbitrage/markets/gemini"
 	"github.com/alessiosavi/GoArbitrage/markets/okcoin"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -15,6 +19,7 @@ func main() {
 	defer loggerMgr.Sync() // flushes buffer, if any
 	logger := loggerMgr.Sugar()
 	logger.Infow("GoArbitrage started!")
+	initDataFolder()
 	// Log configuration
 
 	// var b bitfinex.Bitfinex
@@ -23,13 +28,17 @@ func main() {
 	// b.GetOrderBook()
 	// fmt.Printf("%+v\n", b)
 
-	var okcoin okcoin.OkCoin
+	// var okcoin okcoin.OkCoin
+	// okcoin.GetPairsList()
+	// okcoin.GetPairsDetails()
+	// okcoin.GetOrderBook()
+	// log.Println(okcoin)
 
-	okcoin.GetPairsList()
-	okcoin.GetPairsDetails()
-	okcoin.GetOrderBook()
-
-	log.Println(okcoin)
+	// var gemini gemini.Gemini
+	// gemini.GetPairsList()
+	// gemini.GetOrderBook()
+	// gemini.GetPairsDetails()
+	// log.Println(gemini)
 
 }
 
@@ -41,4 +50,25 @@ func initZapLog() *zap.Logger {
 	//zapcore.ISO8601TimeEncoder
 	logger, _ := config.Build()
 	return logger
+}
+
+func initDataFolder() {
+	if _, err := os.Stat(gemini.GEMINI_ORDERBOOK_DATA); os.IsNotExist(err) {
+		zap.S().Debugw("Creating folder for GEMINI data ...")
+		os.Mkdir(constants.GEMINI_PATH, os.ModePerm)
+		os.Mkdir(gemini.GEMINI_ORDERBOOK_DATA, os.ModePerm)
+	}
+
+	if _, err := os.Stat(okcoin.OKCOIN_ORDERBOOK_DATA); os.IsNotExist(err) {
+		zap.S().Debugw("Creating folder for GEMINI data ...")
+		os.Mkdir(constants.OKCOIN_PATH, os.ModePerm)
+		os.Mkdir(okcoin.OKCOIN_ORDERBOOK_DATA, os.ModePerm)
+	}
+
+	if _, err := os.Stat(bitfinex.BITFINEX_ORDERBOOK_DATA); os.IsNotExist(err) {
+		zap.S().Debugw("Creating folder for GEMINI data ...")
+		os.Mkdir(constants.BITFINEX_PATH, os.ModePerm)
+		os.Mkdir(bitfinex.BITFINEX_ORDERBOOK_DATA, os.ModePerm)
+	}
+
 }
