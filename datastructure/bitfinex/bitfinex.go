@@ -1,3 +1,4 @@
+// This package will contains all the datastructure necessary for deal with Bitfinex market, internally
 package bitfinex
 
 type BitfinexPairsList struct {
