@@ -2,12 +2,14 @@ package bitfinex
 
 import (
 	"encoding/json"
+	"errors"
 	"io/ioutil"
-	"log"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/alessiosavi/GoArbitrage/utils"
+	"go.uber.org/zap"
 
 	constants "github.com/alessiosavi/GoArbitrage/datastructure"
 	datastructure "github.com/alessiosavi/GoArbitrage/datastructure/bitfinex"
@@ -24,9 +26,13 @@ var BITFINEX_PAIRS_DETAILS string = path.Join(constants.BITFINEX_PATH, "pairs_in
 var BITFINEX_ORDERBOOK_DATA string = path.Join(constants.BITFINEX_PATH, "orders/")
 
 type Bitfinex struct {
-	PairsNames []string
-	Pairs      []datastructure.BitfinexPairs
-	OrderBook  []datastructure.BitfinexOrderBook
+	PairsNames []string                          `json:"pairs_name"`
+	Pairs      []datastructure.BitfinexPairs     `json:"pairs_info"`
+	OrderBook  []datastructure.BitfinexOrderBook `json:"orderbook"`
+	MakerFee   float32                           `json:"maker_fee"`
+	TakerFees  float32                           `json:"taker_fee"`
+	// FeePercent is delegated to save if the fee is in percent or in coin
+	FeePercent bool `json:"fee_percent"`
 }
 
 // GetPairsList is delegated to retrieve the type of pairs in the Bitfinex market
@@ -38,18 +44,22 @@ func (b *Bitfinex) GetPairsList() []string {
 
 	// Avoid to call the HTTP api if the data are present
 	if fileutils.FileExists(BITFINEX_PAIRS_DATA) {
-		log.Println("Data alredy present, avoiding to call the service")
+		zap.S().Debugw("Data alredy present, avoiding to call the service")
 		data, err = ioutil.ReadFile(BITFINEX_PAIRS_DATA)
 		if err != nil {
-			log.Println("Error reading data: " + err.Error())
+			zap.S().Debugw("Error reading data: " + err.Error())
 			return nil
 		}
 	} else {
-		log.Println("Sendind request to [" + BITFINEX_PAIRS_URL + "]")
+		zap.S().Debugw("Sendind request to [" + BITFINEX_PAIRS_URL + "]")
 		// Call the HTTP method for retrieve the pairs
 		resp := request.SendRequest(BITFINEX_PAIRS_URL, "GET", nil, false)
 		if resp.Error != nil {
-			log.Println("Error during http request. Err: " + resp.Error.Error())
+			zap.S().Debugw("Error during http request. Err: " + resp.Error.Error())
+			return nil
+		}
+		if resp.StatusCode != 200 {
+			zap.S().Warnw("Received a non 200 status code: ", resp.StatusCode)
 			return nil
 		}
 		data = resp.Body
@@ -58,10 +68,11 @@ func (b *Bitfinex) GetPairsList() []string {
 	err = json.Unmarshal(data, &pairs)
 
 	if err != nil {
-		log.Println("Error during unmarshal! Err: " + err.Error())
+		zap.S().Debugw("Error during unmarshal! Err: " + err.Error())
 	}
 
 	b.PairsNames = pairs
+
 	// Update the file with the new data
 	utils.DumpStruct(pairs, BITFINEX_PAIRS_DATA)
 	return pairs
@@ -76,19 +87,23 @@ func (b *Bitfinex) GetPairsDetails() ([]datastructure.BitfinexPairs, error) {
 
 	// Avoid to call the HTTP api if the data are present
 	if fileutils.FileExists(BITFINEX_PAIRS_DETAILS) {
-		log.Println("Data alredy present, avoiding to call the service")
+		zap.S().Debugw("Data alredy present, avoiding to call the service")
 		data, err = ioutil.ReadFile(BITFINEX_PAIRS_DETAILS)
 		if err != nil {
-			log.Println("Error reading data: " + err.Error())
+			zap.S().Debugw("Error reading data: " + err.Error())
 			return nil, err
 		}
 	} else {
-		log.Println("Sendind request to [" + BITFINEX_PAIRS_DETAILS_URL + "]")
+		zap.S().Debugw("Sendind request to [" + BITFINEX_PAIRS_DETAILS_URL + "]")
 		// Call the HTTP method for retrieve the pairs
 		resp := request.SendRequest(BITFINEX_PAIRS_DETAILS_URL, "GET", nil, false)
 		if resp.Error != nil {
-			log.Println("Error during http request. Err: " + resp.Error.Error())
+			zap.S().Debugw("Error during http request. Err: " + resp.Error.Error())
 			return nil, resp.Error
+		}
+		if resp.StatusCode != 200 {
+			zap.S().Warnw("Received a non 200 status code: ", resp.StatusCode)
+			return nil, errors.New("NON_200_STATUS_CODE")
 		}
 		data = resp.Body
 	}
@@ -96,7 +111,7 @@ func (b *Bitfinex) GetPairsDetails() ([]datastructure.BitfinexPairs, error) {
 	err = json.Unmarshal(data, &pairsInfo)
 
 	if err != nil {
-		log.Println("Error during unmarshal! Err: " + err.Error())
+		zap.S().Debugw("Error during unmarshal! Err: " + err.Error())
 	}
 
 	b.Pairs = pairsInfo
@@ -106,7 +121,6 @@ func (b *Bitfinex) GetPairsDetails() ([]datastructure.BitfinexPairs, error) {
 }
 
 func (b *Bitfinex) GetOrderBook() {
-
 	var request req.Request
 	var orders []datastructure.BitfinexOrderBook
 	var data []byte
@@ -114,36 +128,45 @@ func (b *Bitfinex) GetOrderBook() {
 
 	for _, pair := range b.PairsNames {
 
+		if strings.Contains(pair, ":") {
+			zap.S().Warnw("[" + pair + "] is not a tradable pair")
+			continue
+		}
 		var orderbook datastructure.BitfinexOrderBook
 		orderbook.Pair = pair
 		file_data := path.Join(BITFINEX_ORDERBOOK_DATA, pair+".txt")
 		// Avoid to call the HTTP api if the data are present
 		if fileutils.FileExists(file_data) {
-			log.Println("Data alredy present, avoiding to call the service")
+			zap.S().Debugw("[" + pair + "] Data alredy present, avoiding to call the service")
 			data, err = ioutil.ReadFile(file_data)
 			if err != nil {
-				log.Println("Error reading data: " + err.Error())
+				zap.S().Debugw("Error reading data: " + err.Error())
 				return
 			}
-
 		} else {
+			time.Sleep(2 * time.Second)
 			url := BITFINEX_ORDER_BOOK_URL + pair
-			log.Println("Sendind request to [" + url + "]")
+			zap.S().Debugw("Sendind request to [" + url + "]")
 			// Call the HTTP method for retrieve the pairs
 			resp := request.SendRequest(url, "GET", nil, false)
 			if resp.Error != nil {
-				log.Println("Error during http request. Err: " + resp.Error.Error())
+				zap.S().Debugw("Error during http request. Err: " + resp.Error.Error())
 				return
 			}
-			log.Println("Response -> " + resp.Dump())
+			if resp.StatusCode != 200 {
+				zap.S().Warnw("Received a non 200 status code: ", resp.StatusCode, " for pair ["+pair+"]")
+				continue
+			}
+
+			zap.S().Debugw("Response -> " + resp.Dump())
 			data = resp.Body
-			time.Sleep(2 * time.Second)
+
 		}
 
 		err = json.Unmarshal(data, &orderbook)
 
 		if err != nil {
-			log.Println("Error during unmarshal! Err: " + err.Error())
+			zap.S().Debugw("Error during unmarshal! Err: " + err.Error())
 		}
 		orders = append(orders, orderbook)
 		// Update the file with the new data
@@ -155,4 +178,10 @@ func (b *Bitfinex) GetOrderBook() {
 
 	// Update the file with the new data
 	utils.DumpStruct(b.OrderBook, path.Join(constants.BITFINEX_PATH, "orders_all.txt"))
+}
+
+func (b *Bitfinex) SetFees() {
+	b.MakerFee = 0.1
+	b.TakerFees = 0.2
+	b.FeePercent = false
 }
