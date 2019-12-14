@@ -27,7 +27,7 @@ var BITFINEX_ORDERBOOK_DATA string = path.Join(constants.BITFINEX_PATH, "orders/
 
 type Bitfinex struct {
 	PairsNames []string                          `json:"pairs_name"`
-	Pairs      []datastructure.BitfinexPairs     `json:"pairs_info"`
+	Pairs      []datastructure.BitfinexPair      `json:"pairs_info"`
 	OrderBook  []datastructure.BitfinexOrderBook `json:"orderbook"`
 	MakerFee   float32                           `json:"maker_fee"`
 	TakerFees  float32                           `json:"taker_fee"`
@@ -79,9 +79,9 @@ func (b *Bitfinex) GetPairsList() []string {
 }
 
 // GetPairsDetails is delegated to retrieve the information related to all pairs for execute order
-func (b *Bitfinex) GetPairsDetails() ([]datastructure.BitfinexPairs, error) {
+func (b *Bitfinex) GetPairsDetails() ([]datastructure.BitfinexPair, error) {
 	var request req.Request
-	var pairsInfo []datastructure.BitfinexPairs
+	var pairsInfo []datastructure.BitfinexPair
 	var data []byte
 	var err error
 
