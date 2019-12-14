@@ -1,15 +1,17 @@
 package main
 
 import (
+	"log"
 	"os"
+
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 
 	constants "github.com/alessiosavi/GoArbitrage/datastructure"
 	"github.com/alessiosavi/GoArbitrage/markets/bitfinex"
 	"github.com/alessiosavi/GoArbitrage/markets/gemini"
+	"github.com/alessiosavi/GoArbitrage/markets/kraken"
 	"github.com/alessiosavi/GoArbitrage/markets/okcoin"
-
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
 func main() {
@@ -20,6 +22,8 @@ func main() {
 	logger := loggerMgr.Sugar()
 	logger.Infow("GoArbitrage started!")
 	initDataFolder()
+
+	log.SetFlags(log.LstdFlags | log.Lmicroseconds | log.Lshortfile)
 	// Log configuration
 
 	// var b bitfinex.Bitfinex
@@ -40,6 +44,11 @@ func main() {
 	// gemini.GetPairsDetails()
 	// log.Println(gemini)
 
+	var kraken kraken.Kraken
+
+	kraken.GetPairsDetails()
+	kraken.GetOrderBook()
+	zap.S().Debug(kraken)
 }
 
 func initZapLog() *zap.Logger {
@@ -69,6 +78,12 @@ func initDataFolder() {
 		zap.S().Debugw("Creating folder for GEMINI data ...")
 		os.Mkdir(constants.BITFINEX_PATH, os.ModePerm)
 		os.Mkdir(bitfinex.BITFINEX_ORDERBOOK_DATA, os.ModePerm)
+	}
+
+	if _, err := os.Stat(kraken.KRAKEN_ORDERBOOK_DATA); os.IsNotExist(err) {
+		zap.S().Debugw("Creating folder for GEMINI data ...")
+		os.Mkdir(constants.KRAKEN_PATH, os.ModePerm)
+		os.Mkdir(kraken.KRAKEN_ORDERBOOK_DATA, os.ModePerm)
 	}
 
 }

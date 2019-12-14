@@ -5,7 +5,7 @@ type BitfinexPairsList struct {
 	Pairs []string `json:"pairs"`
 }
 
-type BitfinexPairs struct {
+type BitfinexPair struct {
 	// Pair rappresent the two coins that are exchanged
 	Pair string `json:"pair"`
 	// MinOrder rappresent the minimum order allowed for the given pair
