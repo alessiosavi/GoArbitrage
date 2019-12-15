@@ -39,25 +39,8 @@ type OkCoin struct {
 	FeePercent bool `json:"fee_percent"`
 }
 
-// GetBookUrl is delegated to generate the URL for the given pairs
-func GetBookUrl(pairs string, size int, depth float64) string {
-	u, err := url.Parse(OKCOIN_PAIRS_DETAILS_URL)
-	if err != nil {
-		zap.S().Warnw("Error creating URL!")
-		return ""
-	}
-	u.Path = path.Join(u.Path, pairs)
-
-	url := u.String() + "/book?size=" + strconv.Itoa(size)
-	if depth != 0 {
-		url += "&depth=" + strconv.FormatFloat(depth, 'f', -1, 64)
-	}
-
-	return url
-}
-
 // GetPairsList is delegated to retrieve the type of pairs in the Bitfinex market
-func (ok *OkCoin) GetPairsList() []string {
+func (ok *OkCoin) GetPairsList() error {
 	var request req.Request
 	var data []byte
 	var err error
@@ -68,29 +51,29 @@ func (ok *OkCoin) GetPairsList() []string {
 		zap.S().Debugw("Data alredy present, avoiding to call the service")
 		data, err = ioutil.ReadFile(OKCOIN_PAIRS_DATA)
 		if err != nil {
-			zap.S().Debugw("Error reading data: " + err.Error())
-			return nil
+			zap.S().Warnw("Error reading data: " + err.Error())
+			return err
 		}
 
 		err = json.Unmarshal(data, &ok.PairsName)
 
 		if err != nil {
 			zap.S().Warnw("Error during unmarshal! Err: " + err.Error())
-			return nil
+			return err
 		}
-		return ok.PairsName
+		return nil
 
 	} else {
 		zap.S().Debugw("Sendind request to [" + OKCOIN_PAIRS_URL + "]")
 		// Call the HTTP method for retrieve the pairs
 		resp := request.SendRequest(OKCOIN_PAIRS_URL, "GET", nil, false)
 		if resp.Error != nil {
-			zap.S().Debugw("Error during http request. Err: " + resp.Error.Error())
-			return nil
+			zap.S().Warnw("Error during http request. Err: " + resp.Error.Error())
+			return resp.Error
 		}
 		if resp.StatusCode != 200 {
-			zap.S().Warnw("Received a non 200 status code: ", resp.StatusCode)
-			return nil
+			zap.S().Warnw("Received a non 200 status code: " + strconv.Itoa(resp.StatusCode))
+			return errors.New("NON_200_STATUS_CODE")
 		}
 		data = resp.Body
 	}
@@ -98,7 +81,7 @@ func (ok *OkCoin) GetPairsList() []string {
 
 	if err != nil {
 		zap.S().Warnw("Error during unmarshal! Err: " + err.Error())
-		return nil
+		return err
 	}
 	ok.PairsName = make([]string, len(pairs_raw))
 	for i := range pairs_raw {
@@ -106,11 +89,11 @@ func (ok *OkCoin) GetPairsList() []string {
 	}
 	// Update the file with the new data
 	utils.DumpStruct(ok.PairsName, OKCOIN_PAIRS_DATA)
-	return ok.PairsName
+	return nil
 }
 
 // GetPairsDetails is delegated to retrieve the information related to the pairs
-func (ok *OkCoin) GetPairsDetails() ([]datastructure.OkCoinPairs, error) {
+func (ok *OkCoin) GetPairsDetails() error {
 	var request req.Request
 	var pairsInfo []datastructure.OkCoinPairs
 	var data []byte
@@ -122,7 +105,7 @@ func (ok *OkCoin) GetPairsDetails() ([]datastructure.OkCoinPairs, error) {
 		data, err = ioutil.ReadFile(OKCOIN_PAIRS_DETAILS)
 		if err != nil {
 			zap.S().Debugw("Error reading data: " + err.Error())
-			return nil, err
+			return err
 		}
 	} else {
 		zap.S().Debugw("Sendind request to [" + OKCOIN_PAIRS_DETAILS_URL + "]")
@@ -130,11 +113,11 @@ func (ok *OkCoin) GetPairsDetails() ([]datastructure.OkCoinPairs, error) {
 		resp := request.SendRequest(OKCOIN_PAIRS_DETAILS_URL, "GET", nil, false)
 		if resp.Error != nil {
 			zap.S().Debugw("Error during http request. Err: " + resp.Error.Error())
-			return nil, resp.Error
+			return resp.Error
 		}
 		if resp.StatusCode != 200 {
-			zap.S().Warnw("Received a non 200 status code: ", resp.StatusCode)
-			return nil, errors.New("NON_200_STATUS_CODE")
+			zap.S().Warnw("Received a non 200 status code: " + strconv.Itoa(resp.StatusCode))
+			return errors.New("NON_200_STATUS_CODE")
 		}
 		data = resp.Body
 	}
@@ -143,6 +126,7 @@ func (ok *OkCoin) GetPairsDetails() ([]datastructure.OkCoinPairs, error) {
 
 	if err != nil {
 		zap.S().Debugw("Error during unmarshal! Err: " + err.Error())
+		return err
 	}
 
 	for i := range pairsInfo {
@@ -152,10 +136,10 @@ func (ok *OkCoin) GetPairsDetails() ([]datastructure.OkCoinPairs, error) {
 	ok.Pairs = pairsInfo
 	// Update the file with the new data
 	utils.DumpStruct(pairsInfo, OKCOIN_PAIRS_DETAILS)
-	return nil, nil
+	return nil
 }
 
-func (ok *OkCoin) GetOrderBook() {
+func (ok *OkCoin) GetAllOrderBook() error {
 	var request req.Request
 	var orders []datastructure.OkCoinOrderBook
 	var data []byte
@@ -175,7 +159,7 @@ func (ok *OkCoin) GetOrderBook() {
 			data, err = ioutil.ReadFile(file_data)
 			if err != nil {
 				zap.S().Debugw("Error reading data: " + err.Error())
-				return
+				return err
 			}
 		} else {
 			time.Sleep(100 * time.Millisecond)
@@ -185,7 +169,7 @@ func (ok *OkCoin) GetOrderBook() {
 			resp := request.SendRequest(url, "GET", nil, false)
 			if resp.Error != nil {
 				zap.S().Debugw("Error during http request. Err: " + resp.Error.Error())
-				return
+				return resp.Error
 			}
 			if resp.StatusCode != 200 {
 				zap.S().Warnw("Received a non 200 status code: " + strconv.Itoa(resp.StatusCode) + " for pair [" + pair + "]")
@@ -205,11 +189,29 @@ func (ok *OkCoin) GetOrderBook() {
 		orders = append(orders, orderbook)
 		// Update the file with the new data
 		utils.DumpStruct(orderbook, file_data)
-
 	}
 
 	ok.OrderBook = orders
 
 	// Update the file with the new data
 	utils.DumpStruct(ok.OrderBook, path.Join(constants.OKCOIN_PATH, "orders_all.json"))
+
+	return nil
+}
+
+// getBookUrl is delegated to generate the URL for the given pairs
+func getBookUrl(pairs string, size int, depth float64) string {
+	u, err := url.Parse(OKCOIN_PAIRS_DETAILS_URL)
+	if err != nil {
+		zap.S().Warnw("Error creating URL!")
+		return ""
+	}
+	u.Path = path.Join(u.Path, pairs)
+
+	url := u.String() + "/book?size=" + strconv.Itoa(size)
+	if depth != 0 {
+		url += "&depth=" + strconv.FormatFloat(depth, 'f', -1, 64)
+	}
+
+	return url
 }
