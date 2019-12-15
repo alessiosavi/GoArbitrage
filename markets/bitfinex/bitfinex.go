@@ -27,13 +27,18 @@ var BITFINEX_PAIRS_DETAILS string = path.Join(constants.BITFINEX_PATH, "pairs_in
 var BITFINEX_ORDERBOOK_DATA string = path.Join(constants.BITFINEX_PATH, "orders/")
 
 type Bitfinex struct {
-	PairsNames []string                          `json:"pairs_name"`
-	Pairs      []datastructure.BitfinexPair      `json:"pairs_info"`
-	OrderBook  []datastructure.BitfinexOrderBook `json:"orderbook"`
-	MakerFee   float32                           `json:"maker_fee"`
-	TakerFees  float32                           `json:"taker_fee"`
+	PairsNames []string                                   `json:"pairs_name"`
+	Pairs      map[string]datastructure.BitfinexPair      `json:"pairs_info"`
+	OrderBook  map[string]datastructure.BitfinexOrderBook `json:"orderbook"`
+	MakerFee   float32                                    `json:"maker_fee"`
+	TakerFees  float32                                    `json:"taker_fee"`
 	// FeePercent is delegated to save if the fee is in percent or in coin
 	FeePercent bool `json:"fee_percent"`
+}
+
+func (b *Bitfinex) Init() {
+	b.Pairs = make(map[string]datastructure.BitfinexPair)
+	b.OrderBook = make(map[string]datastructure.BitfinexOrderBook)
 }
 
 // GetPairsList is delegated to retrieve the type of pairs in the Bitfinex market
@@ -116,21 +121,23 @@ func (b *Bitfinex) GetPairsDetails() error {
 		return err
 	}
 
-	b.Pairs = pairsInfo
+	for i := range pairsInfo {
+		b.Pairs[pairsInfo[i].Pair] = pairsInfo[i]
+	}
+
 	// Update the file with the new data
-	utils.DumpStruct(pairsInfo, BITFINEX_PAIRS_DETAILS)
+	utils.DumpStruct(b.Pairs, BITFINEX_PAIRS_DETAILS)
 
 	return nil
 }
 
 func (b *Bitfinex) GetAllOrderBook() error {
 	var request req.Request
-	var orders []datastructure.BitfinexOrderBook
 	var data []byte
 	var err error
 
 	for _, pair := range b.PairsNames {
-
+		zap.S().Debugw("Managin pair: [" + pair + "]")
 		if strings.Contains(pair, ":") {
 			zap.S().Warnw("[" + pair + "] is not a tradable pair")
 			continue
@@ -144,7 +151,7 @@ func (b *Bitfinex) GetAllOrderBook() error {
 			data, err = ioutil.ReadFile(file_data)
 			if err != nil {
 				zap.S().Warnw("Error reading data: " + err.Error())
-				return err
+				continue
 			}
 		} else {
 			time.Sleep(2 * time.Second)
@@ -168,14 +175,13 @@ func (b *Bitfinex) GetAllOrderBook() error {
 
 		if err != nil {
 			zap.S().Debugw("Error during unmarshal pair [" + pair + "]! Err: " + err.Error())
-			return err
+			continue
 		}
-		orders = append(orders, orderbook)
-		// Update the file with the new data
-		utils.DumpStruct(orderbook, file_data)
-	}
 
-	b.OrderBook = orders
+		b.OrderBook[pair] = orderbook
+		// Update the file with the new data
+		utils.DumpStruct(b.OrderBook[pair], file_data)
+	}
 
 	// Update the file with the new data
 	utils.DumpStruct(b.OrderBook, path.Join(constants.BITFINEX_PATH, "orders_all.json"))

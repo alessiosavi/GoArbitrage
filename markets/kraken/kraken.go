@@ -15,6 +15,7 @@ import (
 	datastructure "github.com/alessiosavi/GoArbitrage/datastructure/kraken"
 	"github.com/alessiosavi/GoArbitrage/utils"
 	fileutils "github.com/alessiosavi/GoGPUtils/files"
+
 	req "github.com/alessiosavi/Requests"
 )
 
@@ -105,46 +106,50 @@ func (k *Kraken) GetAllOrderBook() error {
 
 	// k.OrdersBook = make([]datastructure.BitfinexOrderBook, len(k.PairsNames))
 	for _, pair := range k.PairsNames {
+		var order datastructure.BitfinexOrderBook
+		zap.S().Debugw("Managin pair: [" + pair + "]")
 		file := path.Join(KRAKEN_ORDERBOOK_DATA, pair+".json")
 		if fileutils.FileExists(file) {
 			zap.S().Debugw("Data [" + pair + "] alredy present, avoiding to call the service")
 			data, err = ioutil.ReadFile(file)
 			if err != nil {
 				zap.S().Warnw("Error reading data: " + err.Error())
-				return err
+				continue
 			}
-			var order datastructure.BitfinexOrderBook
-			order.Pair = pair
-			err = json.Unmarshal(data, &order)
+			// err = json.Unmarshal(data, &order)
+			order, err = loadOrderBook(data)
 			if err != nil {
 				zap.S().Warnw("Error reading data: " + err.Error())
-				return err
+				continue
+			} else {
+				//order.Pair = pair
+				k.OrdersBook[pair] = order
 			}
-			k.OrdersBook[pair] = order
 		} else {
-
 			url := KRAKEN_ORDER_BOOK_URL + pair + `&count=4`
 			zap.S().Debugw("Sendind request to [" + url + "]")
 			// Call the HTTP method for retrieve the pairs
 			resp := request.SendRequest(url, "GET", nil, false)
 			if resp.Error != nil {
 				zap.S().Warnw("Error during http request. Err: " + resp.Error.Error())
-				return resp.Error
+				continue
 			}
 			if resp.StatusCode != 200 {
 				zap.S().Warnw("Received a non 200 status code: " + strconv.Itoa(resp.StatusCode))
-				return errors.New("NON_200_STATUS_CODE")
+				continue
 			}
 			data = resp.Body
+
+			order, err = loadOrderBook(data)
+			if err != nil {
+				zap.S().Warnw("Error during retrieve of pair [" + pair + "]!")
+			} else {
+				order.Pair = pair
+				k.OrdersBook[pair] = order
+				utils.DumpStruct(order, file)
+			}
 		}
-		order, err := loadOrderBook(data)
-		if err != nil {
-			zap.S().Warnw("Error during retrieve of pair [" + pair + "]!")
-		} else {
-			order.Pair = pair
-			k.OrdersBook[pair] = order
-			utils.DumpStruct(order, file)
-		}
+
 	}
 
 	utils.DumpStruct(k.OrdersBook, path.Join(constants.KRAKEN_PATH, "orders_all.json"))

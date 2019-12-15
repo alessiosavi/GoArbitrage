@@ -28,12 +28,17 @@ var GEMINI_ORDERBOOK_DATA string = path.Join(constants.GEMINI_PATH, "orders/")
 type Gemini struct {
 	PairsNames []string `json:"pairs_name"`
 	// Pairs      []datastructure.GeminiPairs     `json:"pairs_info"`
-	OrderBook []datastructure.GeminiOrderBook `json:"orderbook"`
-	PairsInfo []datastructure.GeminiPairs     `json:"pairs_info"`
-	MakerFee  float32                         `json:"maker_fee"`
-	TakerFees float32                         `json:"taker_fee"`
+	OrderBook map[string]datastructure.GeminiOrderBook `json:"orderbook"`
+	PairsInfo map[string]datastructure.GeminiPairs     `json:"pairs_info"`
+	MakerFee  float32                                  `json:"maker_fee"`
+	TakerFees float32                                  `json:"taker_fee"`
 	// FeePercent is delegated to save if the fee is in percent or in coin
 	FeePercent bool `json:"fee_percent"`
+}
+
+func (g *Gemini) Init() {
+	g.OrderBook = make(map[string]datastructure.GeminiOrderBook)
+	g.PairsInfo = make(map[string]datastructure.GeminiPairs)
 }
 
 // GetPairsList is delegated to retrieve the type of pairs in the Gemini market
@@ -103,12 +108,17 @@ func (g *Gemini) GetPairsDetails() error {
 		}
 	}
 	err = json.Unmarshal(data, &g.PairsInfo)
-
 	if err != nil {
 		zap.S().Warnw("Error during unmarshal! Err: " + err.Error())
 		return err
 	}
 
+	// for i := range pairs {
+	// 	g.PairsInfo[pairs[i].Pair] = pairs[i]
+	// }
+
+	// Update the file with the new data
+	utils.DumpStruct(g.PairsInfo, GEMINI_PAIRS_DETAILS+"_map")
 	return nil
 }
 
@@ -119,7 +129,7 @@ func (g *Gemini) GetAllOrderBook() error {
 	var err error
 
 	for _, pair := range g.PairsNames {
-
+		zap.S().Debugw("Managin pair: [" + pair + "]")
 		var orderbook datastructure.GeminiOrderBook
 		orderbook.Pair = pair
 		file_data := path.Join(GEMINI_ORDERBOOK_DATA, pair+".json")
@@ -129,7 +139,7 @@ func (g *Gemini) GetAllOrderBook() error {
 			data, err = ioutil.ReadFile(file_data)
 			if err != nil {
 				zap.S().Warnw("Error reading data: " + err.Error())
-				return err
+				continue
 			}
 		} else {
 			// NOTE: limit the response to only 3 orders
@@ -139,7 +149,7 @@ func (g *Gemini) GetAllOrderBook() error {
 			resp := request.SendRequest(url, "GET", nil, false)
 			if resp.Error != nil {
 				zap.S().Warnw("Error during http request. Err: " + resp.Error.Error())
-				return resp.Error
+				continue
 			}
 			if resp.StatusCode != 200 {
 				zap.S().Warnw("Received a non 200 status code: " + strconv.Itoa(resp.StatusCode) + " for pair [" + pair + "]")
@@ -157,10 +167,11 @@ func (g *Gemini) GetAllOrderBook() error {
 			// Update the file with the new data
 			utils.DumpStruct(orderbook, file_data)
 		}
-
 	}
 
-	g.OrderBook = orders
+	for i := range orders {
+		g.OrderBook[orders[i].Pair] = orders[i]
+	}
 
 	// Update the file with the new data
 	utils.DumpStruct(g.OrderBook, path.Join(constants.GEMINI_PATH, "orders_all.json"))

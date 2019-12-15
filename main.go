@@ -27,23 +27,26 @@ func main() {
 	log.SetFlags(log.LstdFlags | log.Lmicroseconds | log.Lshortfile)
 	// Log configuration
 
-	// var bitfinex bitfinex.Bitfinex
-	// bitfinex.SetFees()
-	// bitfinex.GetPairsList()
-	// bitfinex.GetAllOrderBook()
-	// log.Println(fmt.Sprintf("Bitfinex %#v\n", bitfinex))
+	var bitfinex bitfinex.Bitfinex
+	bitfinex.Init()
+	bitfinex.SetFees()
+	bitfinex.GetPairsList()
+	bitfinex.GetAllOrderBook()
+	log.Println(fmt.Sprintf("Bitfinex %#v\n", bitfinex))
 
-	// var okcoin okcoin.OkCoin
-	// okcoin.GetPairsList()
-	// okcoin.GetPairsDetails()
-	// okcoin.GetAllOrderBook()
-	// log.Println(fmt.Sprintf("OkCoin %#v\n", okcoin))
+	var okcoin okcoin.OkCoin
+	okcoin.Init()
+	okcoin.GetPairsList()
+	okcoin.GetPairsDetails()
+	okcoin.GetAllOrderBook()
+	log.Println(fmt.Sprintf("OkCoin %#v\n", okcoin))
 
-	// var gemini gemini.Gemini
-	// gemini.GetPairsList()
-	// gemini.GetAllOrderBook()
-	// gemini.GetPairsDetails()
-	// log.Println(fmt.Sprintf("Gemini %#v\n", gemini))
+	var gemini gemini.Gemini
+	gemini.Init()
+	gemini.GetPairsList()
+	gemini.GetAllOrderBook()
+	gemini.GetPairsDetails()
+	log.Println(fmt.Sprintf("Gemini %#v\n", gemini))
 
 	var kraken kraken.Kraken
 	kraken.Init()
