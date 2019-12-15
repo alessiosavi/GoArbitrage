@@ -19,7 +19,7 @@ func Test_GetBookUrl(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		result := GetBookUrl(c.pairs, c.size, c.depth)
+		result := getBookUrl(c.pairs, c.size, c.depth)
 		if strings.Compare(result, c.expected) != 0 {
 			t.Errorf("Received %v, expected %v [test n. %d]", result, c.expected, c.number)
 		}

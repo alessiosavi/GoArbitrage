@@ -2,6 +2,7 @@ package gemini
 
 import (
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"path"
 	"strconv"
@@ -36,7 +37,7 @@ type Gemini struct {
 }
 
 // GetPairsList is delegated to retrieve the type of pairs in the Gemini market
-func (g *Gemini) GetPairsList() []string {
+func (g *Gemini) GetPairsList() error {
 	var request req.Request
 	var pairs []string
 	var data []byte
@@ -48,7 +49,7 @@ func (g *Gemini) GetPairsList() []string {
 		data, err = ioutil.ReadFile(GEMINI_PAIRS_DATA)
 		if err != nil {
 			zap.S().Warnw("Error reading data: " + err.Error())
-			return nil
+			return err
 		}
 
 		err = json.Unmarshal(data, &g.PairsNames)
@@ -57,7 +58,7 @@ func (g *Gemini) GetPairsList() []string {
 			zap.S().Warnw("Error during unmarshal! Err: " + err.Error())
 			return nil
 		}
-		return g.PairsNames
+		return nil
 
 	} else {
 		zap.S().Debugw("Sendind request to [" + GEMINI_PAIRS_URL + "]")
@@ -65,11 +66,11 @@ func (g *Gemini) GetPairsList() []string {
 		resp := request.SendRequest(GEMINI_PAIRS_URL, "GET", nil, false)
 		if resp.Error != nil {
 			zap.S().Warnw("Error during http request. Err: " + resp.Error.Error())
-			return nil
+			return resp.Error
 		}
 		if resp.StatusCode != 200 {
-			zap.S().Warnw("Received a non 200 status code: ", resp.StatusCode)
-			return nil
+			zap.S().Warnw("Received a non 200 status code: " + strconv.Itoa(resp.StatusCode))
+			return errors.New("NON_200_STATUS_CODE")
 		}
 		data = resp.Body
 	}
@@ -78,17 +79,18 @@ func (g *Gemini) GetPairsList() []string {
 
 	if err != nil {
 		zap.S().Warnw("Error during unmarshal! Err: " + err.Error())
+		return err
 	}
 
 	g.PairsNames = pairs
 
 	// Update the file with the new data
 	utils.DumpStruct(pairs, GEMINI_PAIRS_DATA)
-	return pairs
+	return nil
 }
 
 // GetPairsDetails is delegated to read the file that contains the min order for the given pair
-func (g *Gemini) GetPairsDetails() {
+func (g *Gemini) GetPairsDetails() error {
 	var err error
 	var data []byte
 
@@ -97,18 +99,20 @@ func (g *Gemini) GetPairsDetails() {
 		data, err = ioutil.ReadFile(GEMINI_PAIRS_DETAILS)
 		if err != nil {
 			zap.S().Warnw("Error reading data: " + err.Error())
-			return
+			return err
 		}
 	}
 	err = json.Unmarshal(data, &g.PairsInfo)
 
 	if err != nil {
 		zap.S().Warnw("Error during unmarshal! Err: " + err.Error())
+		return err
 	}
 
+	return nil
 }
 
-func (g *Gemini) GetOrderBook() {
+func (g *Gemini) GetAllOrderBook() error {
 	var request req.Request
 	var orders []datastructure.GeminiOrderBook
 	var data []byte
@@ -125,7 +129,7 @@ func (g *Gemini) GetOrderBook() {
 			data, err = ioutil.ReadFile(file_data)
 			if err != nil {
 				zap.S().Warnw("Error reading data: " + err.Error())
-				return
+				return err
 			}
 		} else {
 			// NOTE: limit the response to only 3 orders
@@ -135,7 +139,7 @@ func (g *Gemini) GetOrderBook() {
 			resp := request.SendRequest(url, "GET", nil, false)
 			if resp.Error != nil {
 				zap.S().Warnw("Error during http request. Err: " + resp.Error.Error())
-				return
+				return resp.Error
 			}
 			if resp.StatusCode != 200 {
 				zap.S().Warnw("Received a non 200 status code: " + strconv.Itoa(resp.StatusCode) + " for pair [" + pair + "]")
@@ -147,11 +151,12 @@ func (g *Gemini) GetOrderBook() {
 		err = json.Unmarshal(data, &orderbook)
 
 		if err != nil {
-			zap.S().Warnw("Error during unmarshal! Err: " + err.Error())
+			zap.S().Warnw("Error during unmarshal pair [" + pair + "]! Err: " + err.Error())
+		} else {
+			orders = append(orders, orderbook)
+			// Update the file with the new data
+			utils.DumpStruct(orderbook, file_data)
 		}
-		orders = append(orders, orderbook)
-		// Update the file with the new data
-		utils.DumpStruct(orderbook, file_data)
 
 	}
 
@@ -159,10 +164,5 @@ func (g *Gemini) GetOrderBook() {
 
 	// Update the file with the new data
 	utils.DumpStruct(g.OrderBook, path.Join(constants.GEMINI_PATH, "orders_all.json"))
+	return nil
 }
-
-// func (b *Gemini) SetFees() {
-// 	b.MakerFee = 0.1
-// 	b.TakerFees = 0.2
-// 	b.FeePercent = false
-// }

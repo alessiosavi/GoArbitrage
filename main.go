@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -26,29 +27,29 @@ func main() {
 	log.SetFlags(log.LstdFlags | log.Lmicroseconds | log.Lshortfile)
 	// Log configuration
 
-	// var b bitfinex.Bitfinex
-	// b.SetFees()
-	// b.GetPairsList()
-	// b.GetOrderBook()
-	// fmt.Printf("%+v\n", b)
+	// var bitfinex bitfinex.Bitfinex
+	// bitfinex.SetFees()
+	// bitfinex.GetPairsList()
+	// bitfinex.GetAllOrderBook()
+	// log.Println(fmt.Sprintf("Bitfinex %#v\n", bitfinex))
 
 	// var okcoin okcoin.OkCoin
 	// okcoin.GetPairsList()
 	// okcoin.GetPairsDetails()
-	// okcoin.GetOrderBook()
-	// log.Println(okcoin)
+	// okcoin.GetAllOrderBook()
+	// log.Println(fmt.Sprintf("OkCoin %#v\n", okcoin))
 
 	// var gemini gemini.Gemini
 	// gemini.GetPairsList()
-	// gemini.GetOrderBook()
+	// gemini.GetAllOrderBook()
 	// gemini.GetPairsDetails()
-	// log.Println(gemini)
+	// log.Println(fmt.Sprintf("Gemini %#v\n", gemini))
 
 	var kraken kraken.Kraken
-
+	kraken.Init()
 	kraken.GetPairsDetails()
-	kraken.GetOrderBook()
-	zap.S().Debug(kraken)
+	kraken.GetAllOrderBook()
+	log.Println(fmt.Sprintf("Kraken %#v\n", kraken))
 }
 
 func initZapLog() *zap.Logger {
@@ -69,19 +70,19 @@ func initDataFolder() {
 	}
 
 	if _, err := os.Stat(okcoin.OKCOIN_ORDERBOOK_DATA); os.IsNotExist(err) {
-		zap.S().Debugw("Creating folder for GEMINI data ...")
+		zap.S().Debugw("Creating folder for OKCOIN data ...")
 		os.Mkdir(constants.OKCOIN_PATH, os.ModePerm)
 		os.Mkdir(okcoin.OKCOIN_ORDERBOOK_DATA, os.ModePerm)
 	}
 
 	if _, err := os.Stat(bitfinex.BITFINEX_ORDERBOOK_DATA); os.IsNotExist(err) {
-		zap.S().Debugw("Creating folder for GEMINI data ...")
+		zap.S().Debugw("Creating folder for BITFINEX data ...")
 		os.Mkdir(constants.BITFINEX_PATH, os.ModePerm)
 		os.Mkdir(bitfinex.BITFINEX_ORDERBOOK_DATA, os.ModePerm)
 	}
 
 	if _, err := os.Stat(kraken.KRAKEN_ORDERBOOK_DATA); os.IsNotExist(err) {
-		zap.S().Debugw("Creating folder for GEMINI data ...")
+		zap.S().Debugw("Creating folder for KRAKEN data ...")
 		os.Mkdir(constants.KRAKEN_PATH, os.ModePerm)
 		os.Mkdir(kraken.KRAKEN_ORDERBOOK_DATA, os.ModePerm)
 	}

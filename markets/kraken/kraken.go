@@ -7,6 +7,7 @@ import (
 	"log"
 	"path"
 	"reflect"
+	"strconv"
 
 	"go.uber.org/zap"
 
@@ -19,8 +20,8 @@ import (
 
 type Kraken struct {
 	PairsNames []string
-	Pairs      []datastructure.KrakenPair
-	OrdersBook []datastructure.BitfinexOrderBook
+	Pairs      map[string]datastructure.KrakenPair
+	OrdersBook map[string]datastructure.BitfinexOrderBook
 }
 
 const KRAKEN_PAIRS_URL string = `https://api.bitfinex.com/v1/symbols`
@@ -31,9 +32,13 @@ var KRAKEN_PAIRS_DATA string = path.Join(constants.KRAKEN_PATH, "pairs_list.json
 var KRAKEN_PAIRS_DETAILS string = path.Join(constants.KRAKEN_PATH, "pairs_info.json")
 var KRAKEN_ORDERBOOK_DATA string = path.Join(constants.KRAKEN_PATH, "orders/")
 
+func (k *Kraken) Init() {
+	k.Pairs = make(map[string]datastructure.KrakenPair)
+	k.OrdersBook = make(map[string]datastructure.BitfinexOrderBook)
+}
+
 // GetPairsDetails is delegated to retrieve the pairs detail and the pairs names
 func (k *Kraken) GetPairsDetails() error {
-
 	var request req.Request
 	var data []byte
 	var err error
@@ -53,8 +58,10 @@ func (k *Kraken) GetPairsDetails() error {
 		}
 
 		k.PairsNames = make([]string, len(k.Pairs))
-		for i := range k.Pairs {
-			k.PairsNames[i] = k.Pairs[i].Altname
+		var i int
+		for key := range k.Pairs {
+			k.PairsNames[i] = k.Pairs[key].Altname
+			i++
 		}
 		return nil
 
@@ -67,7 +74,7 @@ func (k *Kraken) GetPairsDetails() error {
 			return resp.Error
 		}
 		if resp.StatusCode != 200 {
-			zap.S().Warnw("Received a non 200 status code: ", resp.StatusCode)
+			zap.S().Warnw("Received a non 200 status code: " + strconv.Itoa(resp.StatusCode))
 			return errors.New("NON_200_STATUS_CODE")
 		}
 		data = resp.Body
@@ -81,14 +88,17 @@ func (k *Kraken) GetPairsDetails() error {
 	}
 
 	k.PairsNames = make([]string, len(k.Pairs))
-	for i := range k.Pairs {
-		k.PairsNames[i] = k.Pairs[i].Altname
+	var i int
+	for key := range k.Pairs {
+		k.PairsNames[i] = k.Pairs[key].Altname
+		i++
 	}
 	utils.DumpStruct(k.Pairs, KRAKEN_PAIRS_DETAILS)
 	return nil
 }
 
-func (k *Kraken) GetOrderBook() error {
+// GetAllOrderBook is delegated to download all the order book related to the pair traded
+func (k *Kraken) GetAllOrderBook() error {
 	var request req.Request
 	var err error
 	var data []byte
@@ -100,17 +110,17 @@ func (k *Kraken) GetOrderBook() error {
 			zap.S().Debugw("Data [" + pair + "] alredy present, avoiding to call the service")
 			data, err = ioutil.ReadFile(file)
 			if err != nil {
-				zap.S().Debugw("Error reading data: " + err.Error())
+				zap.S().Warnw("Error reading data: " + err.Error())
 				return err
 			}
 			var order datastructure.BitfinexOrderBook
 			order.Pair = pair
 			err = json.Unmarshal(data, &order)
 			if err != nil {
-				zap.S().Debugw("Error reading data: " + err.Error())
+				zap.S().Warnw("Error reading data: " + err.Error())
 				return err
 			}
-			k.OrdersBook = append(k.OrdersBook, order)
+			k.OrdersBook[pair] = order
 		} else {
 
 			url := KRAKEN_ORDER_BOOK_URL + pair + `&count=4`
@@ -118,23 +128,22 @@ func (k *Kraken) GetOrderBook() error {
 			// Call the HTTP method for retrieve the pairs
 			resp := request.SendRequest(url, "GET", nil, false)
 			if resp.Error != nil {
-				zap.S().Debugw("Error during http request. Err: " + resp.Error.Error())
+				zap.S().Warnw("Error during http request. Err: " + resp.Error.Error())
 				return resp.Error
 			}
 			if resp.StatusCode != 200 {
-				zap.S().Warnw("Received a non 200 status code: ", resp.StatusCode)
+				zap.S().Warnw("Received a non 200 status code: " + strconv.Itoa(resp.StatusCode))
 				return errors.New("NON_200_STATUS_CODE")
 			}
 			data = resp.Body
 		}
 		order, err := loadOrderBook(data)
 		if err != nil {
-			log.Println("Error during retrieve!")
+			zap.S().Warnw("Error during retrieve of pair [" + pair + "]!")
 		} else {
 			order.Pair = pair
-			k.OrdersBook = append(k.OrdersBook, order)
+			k.OrdersBook[pair] = order
 			utils.DumpStruct(order, file)
-
 		}
 	}
 
@@ -165,12 +174,12 @@ func loadOrderBook(data []byte) (datastructure.BitfinexOrderBook, error) {
 }
 
 // loadKrakenPairs is delegated to load the data related to pairs info
-func loadKrakenPairs(data []byte) []datastructure.KrakenPair {
+func loadKrakenPairs(data []byte) map[string]datastructure.KrakenPair {
 	var err error
 
 	// Creating the maps for the JSON data
 	m := map[string]interface{}{}
-	var pairInfo []datastructure.KrakenPair
+	var pairInfo map[string]datastructure.KrakenPair = make(map[string]datastructure.KrakenPair)
 
 	// Parsing/Unmarshalling JSON
 	err = json.Unmarshal(data, &m)
@@ -197,7 +206,7 @@ func loadKrakenPairs(data []byte) []datastructure.KrakenPair {
 				zap.S().Warnw("Panic on key: ", key, " during unmarshal. ERR: "+err.Error())
 				continue
 			}
-			pairInfo = append(pairInfo, result)
+			pairInfo[key.String()] = result
 		}
 	}
 	return pairInfo
