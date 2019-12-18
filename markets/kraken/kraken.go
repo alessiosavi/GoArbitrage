@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
-	"log"
 	"path"
 	"reflect"
 	"strconv"
@@ -124,7 +123,6 @@ func (k *Kraken) GetAllOrderBook() error {
 			} else {
 				//order.Pair = pair
 				k.OrderBook[pair] = order
-				log.Println("Order: ", order)
 			}
 		} else {
 			url := KRAKEN_ORDER_BOOK_URL + pair + `&count=4`

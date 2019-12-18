@@ -25,21 +25,21 @@ func main() {
 
 	log.SetFlags(log.LstdFlags | log.Lmicroseconds | log.Lshortfile)
 	// Log configuration
-	// var bitfinex bitfinex.Bitfinex
-	// bitfinex.Init()
-	// bitfinex.SetFees()
-	// bitfinex.GetPairsList()
-	// bitfinex.GetAllOrderBook()
-	// log.Println(bitfinex.GetMarketData("abseth"))
+	var bitfinex bitfinex.Bitfinex
+	bitfinex.Init()
+	bitfinex.SetFees()
+	bitfinex.GetPairsList()
+	bitfinex.GetAllOrderBook()
+	log.Println(bitfinex.GetMarketData("etheur"))
 	//log.Println(fmt.Sprintf("Bitfinex %#v\n", bitfinex))
 
-	// var okcoin okcoin.OkCoin
-	// okcoin.Init()
-	// okcoin.GetPairsList()
-	// okcoin.GetPairsDetails()
-	// okcoin.GetAllOrderBook()
-	// log.Println(okcoin.GetMarketsData())
-	// log.Println(okcoin.GetMarketData("BTC-SGD"))
+	var okcoin okcoin.OkCoin
+	okcoin.Init()
+	okcoin.GetPairsList()
+	okcoin.GetPairsDetails()
+	okcoin.GetAllOrderBook()
+	//log.Println(okcoin.GetMarketsData())
+	log.Println(okcoin.GetMarketData("ETH-EUR"))
 	// log.Println(fmt.Sprintf("OkCoin %#v\n", okcoin))
 
 	// var gemini gemini.Gemini
@@ -54,7 +54,7 @@ func main() {
 	kraken.Init()
 	kraken.GetPairsDetails()
 	kraken.GetAllOrderBook()
-	log.Println(kraken.GetMarketData("ADACAD"))
+	log.Println(kraken.GetMarketData("ETHEUR"))
 	// log.Println(fmt.Sprintf("Kraken %#v\n", kraken))
 }
 
@@ -65,6 +65,7 @@ func initZapLog() *zap.Logger {
 	config.EncoderConfig.EncodeTime = zapcore.RFC3339NanoTimeEncoder
 	//zapcore.ISO8601TimeEncoder
 	logger, _ := config.Build()
+	config.Level.SetLevel(zap.InfoLevel)
 	return logger
 }
 

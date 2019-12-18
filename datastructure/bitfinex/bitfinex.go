@@ -18,7 +18,7 @@ type BitfinexPair struct {
 
 type BitfinexOrder struct {
 	Price  string `json:"price"`
-	Volume string `json:"volume"`
+	Volume string `json:"amount"`
 }
 
 type BitfinexOrderBook struct {
