@@ -14,7 +14,8 @@ import (
 	"github.com/alessiosavi/GoArbitrage/utils"
 	"go.uber.org/zap"
 
-	constants "github.com/alessiosavi/GoArbitrage/datastructure"
+	constants "github.com/alessiosavi/GoArbitrage/datastructure/constants"
+	"github.com/alessiosavi/GoArbitrage/datastructure/market"
 	datastructure "github.com/alessiosavi/GoArbitrage/datastructure/okcoin"
 	fileutils "github.com/alessiosavi/GoGPUtils/files"
 	req "github.com/alessiosavi/Requests"
@@ -42,6 +43,68 @@ type OkCoin struct {
 func (o *OkCoin) Init() {
 	o.Pairs = make(map[string]datastructure.OkCoinPairs)
 	o.OrderBook = make(map[string]datastructure.OkCoinOrderBook)
+}
+
+func (o *OkCoin) GetMarketData(pair string) (market.Market, error) {
+	var markets market.Market
+	markets.Asks = make(map[string][]market.MarketOrder, len(o.OrderBook))
+	markets.Bids = make(map[string][]market.MarketOrder, len(o.OrderBook))
+	markets.MarketName = `OKCOIN`
+	var order market.MarketOrder
+	if orders, ok := o.OrderBook[pair]; ok {
+		var asks []market.MarketOrder = make([]market.MarketOrder, len(orders.Asks))
+		for i, ask := range orders.Asks {
+			price, _ := strconv.ParseFloat(ask[0], 64)
+			volume, _ := strconv.ParseFloat(ask[1], 64)
+			order.Price = price
+			order.Volume = volume
+			asks[i] = order
+		}
+		var bids []market.MarketOrder = make([]market.MarketOrder, len(orders.Bids))
+		for i, bid := range orders.Bids {
+			price, _ := strconv.ParseFloat(bid[0], 64)
+			volume, _ := strconv.ParseFloat(bid[1], 64)
+			order.Price = price
+			order.Volume = volume
+			bids[i] = order
+		}
+		markets.Asks[pair] = asks
+		markets.Bids[pair] = bids
+		return markets, nil
+	}
+	return markets, errors.New("unable to find pair [" + pair + "]")
+}
+
+// GetMarketsData is delegated to convert the internal asks and bids struct to the common "market" struct
+func (o *OkCoin) GetMarketsData() market.Market {
+	var markets market.Market
+	markets.Asks = make(map[string][]market.MarketOrder, len(o.OrderBook))
+	markets.Bids = make(map[string][]market.MarketOrder, len(o.OrderBook))
+	markets.MarketName = `OKCOIN`
+	// var i int
+	var order market.MarketOrder
+	for key := range o.OrderBook {
+		var asks []market.MarketOrder = make([]market.MarketOrder, len(o.OrderBook[key].Asks))
+		for i, ask := range o.OrderBook[key].Asks {
+			price, _ := strconv.ParseFloat(ask[0], 64)
+			volume, _ := strconv.ParseFloat(ask[1], 64)
+			order.Price = price
+			order.Volume = volume
+			asks[i] = order
+		}
+		var bids []market.MarketOrder = make([]market.MarketOrder, len(o.OrderBook[key].Bids))
+		for i, bid := range o.OrderBook[key].Bids {
+			price, _ := strconv.ParseFloat(bid[0], 64)
+			volume, _ := strconv.ParseFloat(bid[1], 64)
+			order.Price = price
+			order.Volume = volume
+			bids[i] = order
+		}
+		markets.Asks[key] = asks
+		markets.Bids[key] = bids
+	}
+
+	return markets
 }
 
 // GetPairsList is delegated to retrieve the type of pairs in the Bitfinex market

@@ -9,8 +9,9 @@ import (
 
 	"go.uber.org/zap"
 
-	constants "github.com/alessiosavi/GoArbitrage/datastructure"
+	constants "github.com/alessiosavi/GoArbitrage/datastructure/constants"
 	datastructure "github.com/alessiosavi/GoArbitrage/datastructure/gemini"
+	"github.com/alessiosavi/GoArbitrage/datastructure/market"
 	"github.com/alessiosavi/GoArbitrage/utils"
 	fileutils "github.com/alessiosavi/GoGPUtils/files"
 	req "github.com/alessiosavi/Requests"
@@ -176,4 +177,34 @@ func (g *Gemini) GetAllOrderBook() error {
 	// Update the file with the new data
 	utils.DumpStruct(g.OrderBook, path.Join(constants.GEMINI_PATH, "orders_all.json"))
 	return nil
+}
+
+func (g *Gemini) GetMarketData(pair string) (market.Market, error) {
+	var markets market.Market
+	markets.Asks = make(map[string][]market.MarketOrder, len(g.OrderBook))
+	markets.Bids = make(map[string][]market.MarketOrder, len(g.OrderBook))
+	markets.MarketName = `GEMINI`
+	var order market.MarketOrder
+	if orders, ok := g.OrderBook[pair]; ok {
+		var asks []market.MarketOrder = make([]market.MarketOrder, len(orders.Asks))
+		for i, ask := range orders.Asks {
+			price, _ := strconv.ParseFloat(ask.Price, 64)
+			volume, _ := strconv.ParseFloat(ask.Volume, 64)
+			order.Price = price
+			order.Volume = volume
+			asks[i] = order
+		}
+		var bids []market.MarketOrder = make([]market.MarketOrder, len(orders.Bids))
+		for i, bid := range orders.Bids {
+			price, _ := strconv.ParseFloat(bid.Price, 64)
+			volume, _ := strconv.ParseFloat(bid.Volume, 64)
+			order.Price = price
+			order.Volume = volume
+			bids[i] = order
+		}
+		markets.Asks[pair] = asks
+		markets.Bids[pair] = bids
+		return markets, nil
+	}
+	return markets, errors.New("unable to find pair [" + pair + "]")
 }

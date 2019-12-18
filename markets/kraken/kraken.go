@@ -11,8 +11,9 @@ import (
 
 	"go.uber.org/zap"
 
-	constants "github.com/alessiosavi/GoArbitrage/datastructure"
+	constants "github.com/alessiosavi/GoArbitrage/datastructure/constants"
 	datastructure "github.com/alessiosavi/GoArbitrage/datastructure/kraken"
+	"github.com/alessiosavi/GoArbitrage/datastructure/market"
 	"github.com/alessiosavi/GoArbitrage/utils"
 	fileutils "github.com/alessiosavi/GoGPUtils/files"
 
@@ -22,7 +23,7 @@ import (
 type Kraken struct {
 	PairsNames []string
 	Pairs      map[string]datastructure.KrakenPair
-	OrdersBook map[string]datastructure.BitfinexOrderBook
+	OrderBook  map[string]datastructure.BitfinexOrderBook
 }
 
 const KRAKEN_PAIRS_URL string = `https://api.bitfinex.com/v1/symbols`
@@ -35,7 +36,7 @@ var KRAKEN_ORDERBOOK_DATA string = path.Join(constants.KRAKEN_PATH, "orders/")
 
 func (k *Kraken) Init() {
 	k.Pairs = make(map[string]datastructure.KrakenPair)
-	k.OrdersBook = make(map[string]datastructure.BitfinexOrderBook)
+	k.OrderBook = make(map[string]datastructure.BitfinexOrderBook)
 }
 
 // GetPairsDetails is delegated to retrieve the pairs detail and the pairs names
@@ -104,26 +105,26 @@ func (k *Kraken) GetAllOrderBook() error {
 	var err error
 	var data []byte
 
-	// k.OrdersBook = make([]datastructure.BitfinexOrderBook, len(k.PairsNames))
 	for _, pair := range k.PairsNames {
 		var order datastructure.BitfinexOrderBook
 		zap.S().Debugw("Managin pair: [" + pair + "]")
 		file := path.Join(KRAKEN_ORDERBOOK_DATA, pair+".json")
 		if fileutils.FileExists(file) {
-			zap.S().Debugw("Data [" + pair + "] alredy present, avoiding to call the service")
+			zap.S().Debug("Data [" + pair + "] alredy present, avoiding to call the service")
 			data, err = ioutil.ReadFile(file)
 			if err != nil {
-				zap.S().Warnw("Error reading data: " + err.Error())
+				zap.S().Warn("Error reading data: " + err.Error())
 				continue
 			}
-			// err = json.Unmarshal(data, &order)
-			order, err = loadOrderBook(data)
+			err = json.Unmarshal(data, &order)
+			//order, err = loadOrderBook(data)
 			if err != nil {
-				zap.S().Warnw("Error reading data: " + err.Error())
+				zap.S().Warn("Error reading data: " + err.Error())
 				continue
 			} else {
 				//order.Pair = pair
-				k.OrdersBook[pair] = order
+				k.OrderBook[pair] = order
+				log.Println("Order: ", order)
 			}
 		} else {
 			url := KRAKEN_ORDER_BOOK_URL + pair + `&count=4`
@@ -145,14 +146,14 @@ func (k *Kraken) GetAllOrderBook() error {
 				zap.S().Warnw("Error during retrieve of pair [" + pair + "]!")
 			} else {
 				order.Pair = pair
-				k.OrdersBook[pair] = order
+				k.OrderBook[pair] = order
 				utils.DumpStruct(order, file)
 			}
 		}
 
 	}
 
-	utils.DumpStruct(k.OrdersBook, path.Join(constants.KRAKEN_PATH, "orders_all.json"))
+	utils.DumpStruct(k.OrderBook, path.Join(constants.KRAKEN_PATH, "orders_all.json"))
 	return nil
 }
 
@@ -160,12 +161,12 @@ func loadOrderBook(data []byte) (datastructure.BitfinexOrderBook, error) {
 	res := &datastructure.Response{}
 	var err error
 	if err = json.Unmarshal(data, res); err != nil {
-		log.Println("ERROR! :" + err.Error())
+		zap.S().Warn("ERROR! :" + err.Error())
 		return datastructure.BitfinexOrderBook{}, err
 	}
-
 	// Will have only 1 key
 	for key /*,value*/ := range res.Result {
+
 		// fmt.Println(key)
 		// for i, ask := range value.Asks {
 		// 	log.Println(fmt.Sprintf("Asks[%d] = %#v\n", i, ask))
@@ -215,4 +216,34 @@ func loadKrakenPairs(data []byte) map[string]datastructure.KrakenPair {
 		}
 	}
 	return pairInfo
+}
+
+func (k *Kraken) GetMarketData(pair string) (market.Market, error) {
+	var markets market.Market
+	markets.Asks = make(map[string][]market.MarketOrder, len(k.OrderBook))
+	markets.Bids = make(map[string][]market.MarketOrder, len(k.OrderBook))
+	markets.MarketName = `GEMINI`
+	var order market.MarketOrder
+	if orders, ok := k.OrderBook[pair]; ok {
+		var asks []market.MarketOrder = make([]market.MarketOrder, len(orders.Asks))
+		for i, ask := range orders.Asks {
+			price, _ := strconv.ParseFloat(ask.Price, 64)
+			volume, _ := strconv.ParseFloat(ask.Volume, 64)
+			order.Price = price
+			order.Volume = volume
+			asks[i] = order
+		}
+		var bids []market.MarketOrder = make([]market.MarketOrder, len(orders.Bids))
+		for i, bid := range orders.Bids {
+			price, _ := strconv.ParseFloat(bid.Price, 64)
+			volume, _ := strconv.ParseFloat(bid.Volume, 64)
+			order.Price = price
+			order.Volume = volume
+			bids[i] = order
+		}
+		markets.Asks[pair] = asks
+		markets.Bids[pair] = bids
+		return markets, nil
+	}
+	return markets, errors.New("unable to find pair [" + pair + "]")
 }

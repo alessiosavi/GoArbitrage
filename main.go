@@ -1,14 +1,13 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
-	constants "github.com/alessiosavi/GoArbitrage/datastructure"
+	constants "github.com/alessiosavi/GoArbitrage/datastructure/constants"
 	"github.com/alessiosavi/GoArbitrage/markets/bitfinex"
 	"github.com/alessiosavi/GoArbitrage/markets/gemini"
 	"github.com/alessiosavi/GoArbitrage/markets/kraken"
@@ -26,33 +25,37 @@ func main() {
 
 	log.SetFlags(log.LstdFlags | log.Lmicroseconds | log.Lshortfile)
 	// Log configuration
+	// var bitfinex bitfinex.Bitfinex
+	// bitfinex.Init()
+	// bitfinex.SetFees()
+	// bitfinex.GetPairsList()
+	// bitfinex.GetAllOrderBook()
+	// log.Println(bitfinex.GetMarketData("abseth"))
+	//log.Println(fmt.Sprintf("Bitfinex %#v\n", bitfinex))
 
-	var bitfinex bitfinex.Bitfinex
-	bitfinex.Init()
-	bitfinex.SetFees()
-	bitfinex.GetPairsList()
-	bitfinex.GetAllOrderBook()
-	log.Println(fmt.Sprintf("Bitfinex %#v\n", bitfinex))
+	// var okcoin okcoin.OkCoin
+	// okcoin.Init()
+	// okcoin.GetPairsList()
+	// okcoin.GetPairsDetails()
+	// okcoin.GetAllOrderBook()
+	// log.Println(okcoin.GetMarketsData())
+	// log.Println(okcoin.GetMarketData("BTC-SGD"))
+	// log.Println(fmt.Sprintf("OkCoin %#v\n", okcoin))
 
-	var okcoin okcoin.OkCoin
-	okcoin.Init()
-	okcoin.GetPairsList()
-	okcoin.GetPairsDetails()
-	okcoin.GetAllOrderBook()
-	log.Println(fmt.Sprintf("OkCoin %#v\n", okcoin))
-
-	var gemini gemini.Gemini
-	gemini.Init()
-	gemini.GetPairsList()
-	gemini.GetAllOrderBook()
-	gemini.GetPairsDetails()
-	log.Println(fmt.Sprintf("Gemini %#v\n", gemini))
+	// var gemini gemini.Gemini
+	// gemini.Init()
+	// gemini.GetPairsList()
+	// gemini.GetAllOrderBook()
+	// gemini.GetPairsDetails()
+	// log.Println(gemini.GetMarketData("bchbtc"))
+	// log.Println(fmt.Sprintf("Gemini %#v\n", gemini))
 
 	var kraken kraken.Kraken
 	kraken.Init()
 	kraken.GetPairsDetails()
 	kraken.GetAllOrderBook()
-	log.Println(fmt.Sprintf("Kraken %#v\n", kraken))
+	log.Println(kraken.GetMarketData("ADACAD"))
+	// log.Println(fmt.Sprintf("Kraken %#v\n", kraken))
 }
 
 func initZapLog() *zap.Logger {

@@ -2,6 +2,7 @@ package kraken
 
 import (
 	"encoding/json"
+	"log"
 	"time"
 )
 
@@ -24,9 +25,9 @@ type BitfinexOrderBook struct {
 }
 
 type BitfinexOrder struct {
-	Price     string
-	Volume    string
-	Timestamp time.Time
+	Price     string    `json:"price"`
+	Volume    string    `json:"volume"`
+	Timestamp time.Time `json:"timestamp"`
 }
 
 type Response struct {
@@ -39,8 +40,18 @@ func (b *BitfinexOrder) UnmarshalJSON(data []byte) error {
 	var packedData []json.Number
 	err := json.Unmarshal(data, &packedData)
 	if err != nil {
-		return err
+		type BitfinexOrderJson BitfinexOrder
+		var order BitfinexOrderJson
+		err = json.Unmarshal(data, &order)
+		if err != nil {
+			return err
+		}
+		b.Price = order.Price
+		b.Volume = order.Volume
+		b.Timestamp = order.Timestamp
+		return nil
 	}
+	log.Println("Packed data: ", packedData)
 	b.Price = packedData[0].String()
 	b.Volume = packedData[1].String()
 	t, err := packedData[2].Int64()
