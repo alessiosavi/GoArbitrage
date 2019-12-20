@@ -8,6 +8,8 @@ import (
 	"go.uber.org/zap/zapcore"
 
 	constants "github.com/alessiosavi/GoArbitrage/datastructure/constants"
+	"github.com/alessiosavi/GoArbitrage/datastructure/market"
+	"github.com/alessiosavi/GoArbitrage/engine"
 	"github.com/alessiosavi/GoArbitrage/markets/bitfinex"
 	"github.com/alessiosavi/GoArbitrage/markets/gemini"
 	"github.com/alessiosavi/GoArbitrage/markets/kraken"
@@ -16,7 +18,7 @@ import (
 
 func main() {
 
-	loggerMgr := initZapLog(zap.DebugLevel)
+	loggerMgr := initZapLog(zap.InfoLevel)
 	zap.ReplaceGlobals(loggerMgr)
 	defer loggerMgr.Sync() // flushes buffer, if any
 	logger := loggerMgr.Sugar()
@@ -30,7 +32,7 @@ func main() {
 	bitfinex.SetFees()
 	bitfinex.GetPairsList()
 	bitfinex.GetAllOrderBook()
-	log.Println(bitfinex.GetMarketData("etheur"))
+	//log.Println(bitfinex.GetMarketData("etheur"))
 	//log.Println(fmt.Sprintf("Bitfinex %#v\n", bitfinex))
 
 	var okcoin okcoin.OkCoin
@@ -38,8 +40,7 @@ func main() {
 	okcoin.GetPairsList()
 	okcoin.GetPairsDetails()
 	okcoin.GetAllOrderBook()
-	log.Println(okcoin.GetMarketsData())
-	log.Println(okcoin.GetMarketData("ETH-EUR"))
+	//log.Println(okcoin.GetMarketData("ETH-EUR"))
 	// log.Println(fmt.Sprintf("OkCoin %#v\n", okcoin))
 
 	var gemini gemini.Gemini
@@ -47,15 +48,24 @@ func main() {
 	gemini.GetPairsList()
 	gemini.GetAllOrderBook()
 	gemini.GetPairsDetails()
-	log.Println(gemini.GetMarketData("bchbtc"))
+	//log.Println(gemini.GetMarketData("bchbtc"))
 	// log.Println(fmt.Sprintf("Gemini %#v\n", gemini))
 
 	var kraken kraken.Kraken
 	kraken.Init()
 	kraken.GetPairsDetails()
 	kraken.GetAllOrderBook()
-	log.Println(kraken.GetMarketData("ETHEUR"))
+	//log.Println(kraken.GetMarketData("ETHEUR"))
 	// log.Println(fmt.Sprintf("Kraken %#v\n", kraken))
+
+	var markets []market.Market
+
+	markets = append(markets, gemini.GetMarketsData())
+	markets = append(markets, kraken.GetMarketsData())
+	markets = append(markets, bitfinex.GetMarketsData())
+	markets = append(markets, okcoin.GetMarketsData())
+
+	log.Println(engine.GetCommonCoin(markets...))
 }
 
 func initZapLog(logLevel zapcore.Level) *zap.Logger {

@@ -139,7 +139,7 @@ func (b *Bitfinex) GetAllOrderBook() error {
 	for _, pair := range b.PairsNames {
 		zap.S().Debugw("Managin pair: [" + pair + "]")
 		if strings.Contains(pair, ":") {
-			zap.S().Warnw("[" + pair + "] is not a tradable pair")
+			zap.S().Info("[" + pair + "] is not a tradable pair")
 			continue
 		}
 		var orderbook datastructure.BitfinexOrderBook
@@ -222,4 +222,39 @@ func (b *Bitfinex) GetMarketData(pair string) (market.Market, error) {
 		return markets, nil
 	}
 	return markets, errors.New("unable to find pair [" + pair + "]")
+}
+
+// GetMarketsData is delegated to convert the internal asks and bids struct to the common "market" struct
+func (b *Bitfinex) GetMarketsData() market.Market {
+	var markets market.Market
+	// Standardize key for common coin
+	var key_standard string
+	markets.Asks = make(map[string][]market.MarketOrder, len(b.OrderBook))
+	markets.Bids = make(map[string][]market.MarketOrder, len(b.OrderBook))
+	markets.MarketName = `Bitfinex`
+	// var i int
+	var order market.MarketOrder
+	for key := range b.OrderBook {
+		key_standard = strings.Replace(strings.ToLower(key), "-", "", 1)
+		var asks []market.MarketOrder = make([]market.MarketOrder, len(b.OrderBook[key].Asks))
+		for i, ask := range b.OrderBook[key].Asks {
+			price, _ := strconv.ParseFloat(ask.Price, 64)
+			volume, _ := strconv.ParseFloat(ask.Volume, 64)
+			order.Price = price
+			order.Volume = volume
+			asks[i] = order
+		}
+		var bids []market.MarketOrder = make([]market.MarketOrder, len(b.OrderBook[key].Bids))
+		for i, bid := range b.OrderBook[key].Bids {
+			price, _ := strconv.ParseFloat(bid.Price, 64)
+			volume, _ := strconv.ParseFloat(bid.Volume, 64)
+			order.Price = price
+			order.Volume = volume
+			bids[i] = order
+		}
+		markets.Asks[key_standard] = asks
+		markets.Bids[key_standard] = bids
+	}
+
+	return markets
 }

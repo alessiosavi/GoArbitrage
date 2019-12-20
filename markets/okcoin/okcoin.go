@@ -78,12 +78,15 @@ func (o *OkCoin) GetMarketData(pair string) (market.Market, error) {
 // GetMarketsData is delegated to convert the internal asks and bids struct to the common "market" struct
 func (o *OkCoin) GetMarketsData() market.Market {
 	var markets market.Market
+	// Standardize key for common coin
+	var key_standard string
 	markets.Asks = make(map[string][]market.MarketOrder, len(o.OrderBook))
 	markets.Bids = make(map[string][]market.MarketOrder, len(o.OrderBook))
 	markets.MarketName = `OKCOIN`
 	// var i int
 	var order market.MarketOrder
 	for key := range o.OrderBook {
+		key_standard = strings.Replace(strings.ToLower(key), "-", "", 1)
 		var asks []market.MarketOrder = make([]market.MarketOrder, len(o.OrderBook[key].Asks))
 		for i, ask := range o.OrderBook[key].Asks {
 			price, _ := strconv.ParseFloat(ask[0], 64)
@@ -100,8 +103,8 @@ func (o *OkCoin) GetMarketsData() market.Market {
 			order.Volume = volume
 			bids[i] = order
 		}
-		markets.Asks[key] = asks
-		markets.Bids[key] = bids
+		markets.Asks[key_standard] = asks
+		markets.Bids[key_standard] = bids
 	}
 
 	return markets

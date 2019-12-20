@@ -7,6 +7,7 @@ import (
 	"path"
 	"reflect"
 	"strconv"
+	"strings"
 
 	"go.uber.org/zap"
 
@@ -220,7 +221,7 @@ func (k *Kraken) GetMarketData(pair string) (market.Market, error) {
 	var markets market.Market
 	markets.Asks = make(map[string][]market.MarketOrder, len(k.OrderBook))
 	markets.Bids = make(map[string][]market.MarketOrder, len(k.OrderBook))
-	markets.MarketName = `GEMINI`
+	markets.MarketName = `KRAKEN`
 	var order market.MarketOrder
 	if orders, ok := k.OrderBook[pair]; ok {
 		var asks []market.MarketOrder = make([]market.MarketOrder, len(orders.Asks))
@@ -244,4 +245,40 @@ func (k *Kraken) GetMarketData(pair string) (market.Market, error) {
 		return markets, nil
 	}
 	return markets, errors.New("unable to find pair [" + pair + "]")
+}
+
+// GetMarketsData is delegated to convert the internal asks and bids struct to the common "market" struct
+func (k *Kraken) GetMarketsData() market.Market {
+	var markets market.Market
+	// Standardize key for common coin
+	var key_standard string
+	markets.Asks = make(map[string][]market.MarketOrder, len(k.OrderBook))
+	markets.Bids = make(map[string][]market.MarketOrder, len(k.OrderBook))
+	markets.MarketName = `KRAKEN`
+	// var i int
+	var order market.MarketOrder
+	for key := range k.OrderBook {
+		key_standard = strings.Replace(strings.ToLower(key), "-", "", 1)
+		var asks []market.MarketOrder = make([]market.MarketOrder, len(k.OrderBook[key].Asks))
+
+		for i, ask := range k.OrderBook[key].Asks {
+			price, _ := strconv.ParseFloat(ask.Price, 64)
+			volume, _ := strconv.ParseFloat(ask.Volume, 64)
+			order.Price = price
+			order.Volume = volume
+			asks[i] = order
+		}
+		var bids []market.MarketOrder = make([]market.MarketOrder, len(k.OrderBook[key].Bids))
+		for i, bid := range k.OrderBook[key].Bids {
+			price, _ := strconv.ParseFloat(bid.Price, 64)
+			volume, _ := strconv.ParseFloat(bid.Volume, 64)
+			order.Price = price
+			order.Volume = volume
+			bids[i] = order
+		}
+		markets.Asks[key_standard] = asks
+		markets.Bids[key_standard] = bids
+	}
+
+	return markets
 }

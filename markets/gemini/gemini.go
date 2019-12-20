@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"path"
 	"strconv"
+	"strings"
 
 	"go.uber.org/zap"
 
@@ -211,4 +212,39 @@ func (g *Gemini) GetMarketData(pair string) (market.Market, error) {
 		return markets, nil
 	}
 	return markets, errors.New("unable to find pair [" + pair + "]")
+}
+
+// GetMarketsData is delegated to convert the internal asks and bids struct to the common "market" struct
+func (g *Gemini) GetMarketsData() market.Market {
+	var markets market.Market
+	// Standardize key for common coin
+	var key_standard string
+	markets.Asks = make(map[string][]market.MarketOrder, len(g.OrderBook))
+	markets.Bids = make(map[string][]market.MarketOrder, len(g.OrderBook))
+	markets.MarketName = `GEMINI`
+	// var i int
+	var order market.MarketOrder
+	for key := range g.OrderBook {
+		key_standard = strings.Replace(strings.ToLower(key), "-", "", 1)
+		var asks []market.MarketOrder = make([]market.MarketOrder, len(g.OrderBook[key].Asks))
+		for i, ask := range g.OrderBook[key].Asks {
+			price, _ := strconv.ParseFloat(ask.Price, 64)
+			volume, _ := strconv.ParseFloat(ask.Volume, 64)
+			order.Price = price
+			order.Volume = volume
+			asks[i] = order
+		}
+		var bids []market.MarketOrder = make([]market.MarketOrder, len(g.OrderBook[key].Bids))
+		for i, bid := range g.OrderBook[key].Bids {
+			price, _ := strconv.ParseFloat(bid.Price, 64)
+			volume, _ := strconv.ParseFloat(bid.Volume, 64)
+			order.Price = price
+			order.Volume = volume
+			bids[i] = order
+		}
+		markets.Asks[key_standard] = asks
+		markets.Bids[key_standard] = bids
+	}
+
+	return markets
 }
