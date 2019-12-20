@@ -65,7 +65,13 @@ func main() {
 	markets = append(markets, bitfinex.GetMarketsData())
 	markets = append(markets, okcoin.GetMarketsData())
 
-	log.Println(engine.GetCommonCoin(markets...))
+	pairs := engine.GetCommonCoin(markets...)
+	log.Println("Pairs in common: ", pairs)
+
+	for _, pair := range pairs {
+		engine.Arbitrage(pair, markets)
+	}
+
 }
 
 func initZapLog(logLevel zapcore.Level) *zap.Logger {
