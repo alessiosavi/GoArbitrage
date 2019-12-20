@@ -14,7 +14,8 @@ import (
 	"github.com/alessiosavi/GoArbitrage/utils"
 	"go.uber.org/zap"
 
-	constants "github.com/alessiosavi/GoArbitrage/datastructure"
+	constants "github.com/alessiosavi/GoArbitrage/datastructure/constants"
+	"github.com/alessiosavi/GoArbitrage/datastructure/market"
 	datastructure "github.com/alessiosavi/GoArbitrage/datastructure/okcoin"
 	fileutils "github.com/alessiosavi/GoGPUtils/files"
 	req "github.com/alessiosavi/Requests"
@@ -30,13 +31,80 @@ var OKCOIN_PAIRS_DETAILS string = path.Join(constants.OKCOIN_PATH, "pairs_info.j
 var OKCOIN_ORDERBOOK_DATA string = path.Join(constants.OKCOIN_PATH, "orders/")
 
 type OkCoin struct {
-	PairsName []string                        `json:"pairs_name"`
-	Pairs     []datastructure.OkCoinPairs     `json:"pairs"`
-	OrderBook []datastructure.OkCoinOrderBook `json:"orderbook"`
-	MakerFee  float32                         `json:"maker_fee"`
-	TakerFees float32                         `json:"taker_fee"`
+	PairsName []string                                 `json:"pairs_name"`
+	Pairs     map[string]datastructure.OkCoinPairs     `json:"pairs"`
+	OrderBook map[string]datastructure.OkCoinOrderBook `json:"orderbook"`
+	MakerFee  float32                                  `json:"maker_fee"`
+	TakerFees float32                                  `json:"taker_fee"`
 	// FeePercent is delegated to save if the fee is in percent or in coin
 	FeePercent bool `json:"fee_percent"`
+}
+
+func (o *OkCoin) Init() {
+	o.Pairs = make(map[string]datastructure.OkCoinPairs)
+	o.OrderBook = make(map[string]datastructure.OkCoinOrderBook)
+}
+
+func (o *OkCoin) GetMarketData(pair string) (market.Market, error) {
+	var markets market.Market
+	markets.Asks = make(map[string][]market.MarketOrder, len(o.OrderBook))
+	markets.Bids = make(map[string][]market.MarketOrder, len(o.OrderBook))
+	markets.MarketName = `OKCOIN`
+	var order market.MarketOrder
+	if orders, ok := o.OrderBook[pair]; ok {
+		var asks []market.MarketOrder = make([]market.MarketOrder, len(orders.Asks))
+		for i, ask := range orders.Asks {
+			price, _ := strconv.ParseFloat(ask[0], 64)
+			volume, _ := strconv.ParseFloat(ask[1], 64)
+			order.Price = price
+			order.Volume = volume
+			asks[i] = order
+		}
+		var bids []market.MarketOrder = make([]market.MarketOrder, len(orders.Bids))
+		for i, bid := range orders.Bids {
+			price, _ := strconv.ParseFloat(bid[0], 64)
+			volume, _ := strconv.ParseFloat(bid[1], 64)
+			order.Price = price
+			order.Volume = volume
+			bids[i] = order
+		}
+		markets.Asks[pair] = asks
+		markets.Bids[pair] = bids
+		return markets, nil
+	}
+	return markets, errors.New("unable to find pair [" + pair + "]")
+}
+
+// GetMarketsData is delegated to convert the internal asks and bids struct to the common "market" struct
+func (o *OkCoin) GetMarketsData() market.Market {
+	var markets market.Market
+	markets.Asks = make(map[string][]market.MarketOrder, len(o.OrderBook))
+	markets.Bids = make(map[string][]market.MarketOrder, len(o.OrderBook))
+	markets.MarketName = `OKCOIN`
+	// var i int
+	var order market.MarketOrder
+	for key := range o.OrderBook {
+		var asks []market.MarketOrder = make([]market.MarketOrder, len(o.OrderBook[key].Asks))
+		for i, ask := range o.OrderBook[key].Asks {
+			price, _ := strconv.ParseFloat(ask[0], 64)
+			volume, _ := strconv.ParseFloat(ask[1], 64)
+			order.Price = price
+			order.Volume = volume
+			asks[i] = order
+		}
+		var bids []market.MarketOrder = make([]market.MarketOrder, len(o.OrderBook[key].Bids))
+		for i, bid := range o.OrderBook[key].Bids {
+			price, _ := strconv.ParseFloat(bid[0], 64)
+			volume, _ := strconv.ParseFloat(bid[1], 64)
+			order.Price = price
+			order.Volume = volume
+			bids[i] = order
+		}
+		markets.Asks[key] = asks
+		markets.Bids[key] = bids
+	}
+
+	return markets
 }
 
 // GetPairsList is delegated to retrieve the type of pairs in the Bitfinex market
@@ -129,11 +197,13 @@ func (ok *OkCoin) GetPairsDetails() error {
 		return err
 	}
 
+	ok.Pairs = make(map[string]datastructure.OkCoinPairs, len(pairsInfo))
+
 	for i := range pairsInfo {
 		pairsInfo[i].Pair = pairsInfo[i].BaseCurrency + "-" + pairsInfo[i].QuoteCurrency
+		ok.Pairs[pairsInfo[i].Pair] = pairsInfo[i]
 	}
 
-	ok.Pairs = pairsInfo
 	// Update the file with the new data
 	utils.DumpStruct(pairsInfo, OKCOIN_PAIRS_DETAILS)
 	return nil
@@ -141,11 +211,12 @@ func (ok *OkCoin) GetPairsDetails() error {
 
 func (ok *OkCoin) GetAllOrderBook() error {
 	var request req.Request
-	var orders []datastructure.OkCoinOrderBook
+	var orders map[string]datastructure.OkCoinOrderBook = make(map[string]datastructure.OkCoinOrderBook, len(ok.PairsName))
 	var data []byte
 	var err error
 
 	for _, pair := range ok.PairsName {
+		zap.S().Debugw("Managin pair: [" + pair + "]")
 		if strings.Contains(pair, ":") {
 			zap.S().Warnw("[" + pair + "] is not a tradable pair")
 			continue
@@ -159,7 +230,7 @@ func (ok *OkCoin) GetAllOrderBook() error {
 			data, err = ioutil.ReadFile(file_data)
 			if err != nil {
 				zap.S().Debugw("Error reading data: " + err.Error())
-				return err
+				continue
 			}
 		} else {
 			time.Sleep(100 * time.Millisecond)
@@ -169,7 +240,7 @@ func (ok *OkCoin) GetAllOrderBook() error {
 			resp := request.SendRequest(url, "GET", nil, false)
 			if resp.Error != nil {
 				zap.S().Debugw("Error during http request. Err: " + resp.Error.Error())
-				return resp.Error
+				continue
 			}
 			if resp.StatusCode != 200 {
 				zap.S().Warnw("Received a non 200 status code: " + strconv.Itoa(resp.StatusCode) + " for pair [" + pair + "]")
@@ -182,13 +253,13 @@ func (ok *OkCoin) GetAllOrderBook() error {
 		}
 
 		err = json.Unmarshal(data, &orderbook)
-
 		if err != nil {
 			zap.S().Debugw("Error during unmarshal! Err: " + err.Error())
+		} else {
+			orders[pair] = orderbook
+			// Update the file with the new data
+			utils.DumpStruct(orderbook, file_data)
 		}
-		orders = append(orders, orderbook)
-		// Update the file with the new data
-		utils.DumpStruct(orderbook, file_data)
 	}
 
 	ok.OrderBook = orders

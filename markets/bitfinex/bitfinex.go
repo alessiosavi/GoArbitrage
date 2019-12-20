@@ -7,13 +7,13 @@ import (
 	"path"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/alessiosavi/GoArbitrage/utils"
 	"go.uber.org/zap"
 
-	constants "github.com/alessiosavi/GoArbitrage/datastructure"
 	datastructure "github.com/alessiosavi/GoArbitrage/datastructure/bitfinex"
+	constants "github.com/alessiosavi/GoArbitrage/datastructure/constants"
+	"github.com/alessiosavi/GoArbitrage/datastructure/market"
 	fileutils "github.com/alessiosavi/GoGPUtils/files"
 	req "github.com/alessiosavi/Requests"
 )
@@ -27,13 +27,18 @@ var BITFINEX_PAIRS_DETAILS string = path.Join(constants.BITFINEX_PATH, "pairs_in
 var BITFINEX_ORDERBOOK_DATA string = path.Join(constants.BITFINEX_PATH, "orders/")
 
 type Bitfinex struct {
-	PairsNames []string                          `json:"pairs_name"`
-	Pairs      []datastructure.BitfinexPair      `json:"pairs_info"`
-	OrderBook  []datastructure.BitfinexOrderBook `json:"orderbook"`
-	MakerFee   float32                           `json:"maker_fee"`
-	TakerFees  float32                           `json:"taker_fee"`
+	PairsNames []string                                   `json:"pairs_name"`
+	Pairs      map[string]datastructure.BitfinexPair      `json:"pairs_info"`
+	OrderBook  map[string]datastructure.BitfinexOrderBook `json:"orderbook"`
+	MakerFee   float32                                    `json:"maker_fee"`
+	TakerFees  float32                                    `json:"taker_fee"`
 	// FeePercent is delegated to save if the fee is in percent or in coin
 	FeePercent bool `json:"fee_percent"`
+}
+
+func (b *Bitfinex) Init() {
+	b.Pairs = make(map[string]datastructure.BitfinexPair)
+	b.OrderBook = make(map[string]datastructure.BitfinexOrderBook)
 }
 
 // GetPairsList is delegated to retrieve the type of pairs in the Bitfinex market
@@ -116,21 +121,23 @@ func (b *Bitfinex) GetPairsDetails() error {
 		return err
 	}
 
-	b.Pairs = pairsInfo
+	for i := range pairsInfo {
+		b.Pairs[pairsInfo[i].Pair] = pairsInfo[i]
+	}
+
 	// Update the file with the new data
-	utils.DumpStruct(pairsInfo, BITFINEX_PAIRS_DETAILS)
+	utils.DumpStruct(b.Pairs, BITFINEX_PAIRS_DETAILS)
 
 	return nil
 }
 
 func (b *Bitfinex) GetAllOrderBook() error {
 	var request req.Request
-	var orders []datastructure.BitfinexOrderBook
 	var data []byte
 	var err error
 
 	for _, pair := range b.PairsNames {
-
+		zap.S().Debugw("Managin pair: [" + pair + "]")
 		if strings.Contains(pair, ":") {
 			zap.S().Warnw("[" + pair + "] is not a tradable pair")
 			continue
@@ -144,10 +151,10 @@ func (b *Bitfinex) GetAllOrderBook() error {
 			data, err = ioutil.ReadFile(file_data)
 			if err != nil {
 				zap.S().Warnw("Error reading data: " + err.Error())
-				return err
+				continue
 			}
 		} else {
-			time.Sleep(2 * time.Second)
+			//time.Sleep(2 * time.Second)
 			url := BITFINEX_ORDER_BOOK_URL + pair
 			zap.S().Debugw("Sendind request to [" + url + "]")
 			// Call the HTTP method for retrieve the pairs
@@ -168,14 +175,13 @@ func (b *Bitfinex) GetAllOrderBook() error {
 
 		if err != nil {
 			zap.S().Debugw("Error during unmarshal pair [" + pair + "]! Err: " + err.Error())
-			return err
+			continue
 		}
-		orders = append(orders, orderbook)
-		// Update the file with the new data
-		utils.DumpStruct(orderbook, file_data)
-	}
 
-	b.OrderBook = orders
+		b.OrderBook[pair] = orderbook
+		// Update the file with the new data
+		utils.DumpStruct(b.OrderBook[pair], file_data)
+	}
 
 	// Update the file with the new data
 	utils.DumpStruct(b.OrderBook, path.Join(constants.BITFINEX_PATH, "orders_all.json"))
@@ -186,4 +192,34 @@ func (b *Bitfinex) SetFees() {
 	b.MakerFee = 0.1
 	b.TakerFees = 0.2
 	b.FeePercent = false
+}
+
+func (b *Bitfinex) GetMarketData(pair string) (market.Market, error) {
+	var markets market.Market
+	markets.Asks = make(map[string][]market.MarketOrder, len(b.OrderBook))
+	markets.Bids = make(map[string][]market.MarketOrder, len(b.OrderBook))
+	markets.MarketName = `BITFINEX`
+	var order market.MarketOrder
+	if orders, ok := b.OrderBook[pair]; ok {
+		var asks []market.MarketOrder = make([]market.MarketOrder, len(orders.Asks))
+		for i, ask := range orders.Asks {
+			price, _ := strconv.ParseFloat(ask.Price, 64)
+			volume, _ := strconv.ParseFloat(ask.Volume, 64)
+			order.Price = price
+			order.Volume = volume
+			asks[i] = order
+		}
+		var bids []market.MarketOrder = make([]market.MarketOrder, len(orders.Bids))
+		for i, bid := range orders.Bids {
+			price, _ := strconv.ParseFloat(bid.Price, 64)
+			volume, _ := strconv.ParseFloat(bid.Volume, 64)
+			order.Price = price
+			order.Volume = volume
+			bids[i] = order
+		}
+		markets.Asks[pair] = asks
+		markets.Bids[pair] = bids
+		return markets, nil
+	}
+	return markets, errors.New("unable to find pair [" + pair + "]")
 }

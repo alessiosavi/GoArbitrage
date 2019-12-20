@@ -1,0 +1,6 @@
+# GoArbitrage
+
+An arbitrage engine written in Golang
+
+[![Go Report Card](https://goreportcard.com/badge/github.com/alessiosavi/GoArbitrage)](https://goreportcard.com/report/github.com/alessiosavi/GoArbitrage) [![GoDoc](https://godoc.org/github.com/alessiosavi/GoArbitrage?status.svg)](https://godoc.org/github.com/alessiosavi/GoArbitrage) [![License](https://img.shields.io/github/license/alessiosavi/GoArbitrage)](https://img.shields.io/github/license/alessiosavi/GoArbitrage) [![Version](https://img.shields.io/github/v/tag/alessiosavi/GoArbitrage)](https://img.shields.io/github/v/tag/alessiosavi/GoArbitrage) [![Code size](https://img.shields.io/github/languages/code-size/alessiosavi/GoArbitrage)](https://img.shields.io/github/languages/code-size/alessiosavi/GoArbitrage) [![Repo size](https://img.shields.io/github/repo-size/alessiosavi/GoArbitrage)](https://img.shields.io/github/repo-size/alessiosavi/GoArbitrage) [![Issue open](https://img.shields.io/github/issues/alessiosavi/GoArbitrage)](https://img.shields.io/github/issues/alessiosavi/GoArbitrage)
+[![Issue closed](https://img.shields.io/github/issues-closed/alessiosavi/GoArbitrage)](https://img.shields.io/github/issues-closed/alessiosavi/GoArbitrage)

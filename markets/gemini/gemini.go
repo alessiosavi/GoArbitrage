@@ -9,8 +9,9 @@ import (
 
 	"go.uber.org/zap"
 
-	constants "github.com/alessiosavi/GoArbitrage/datastructure"
+	constants "github.com/alessiosavi/GoArbitrage/datastructure/constants"
 	datastructure "github.com/alessiosavi/GoArbitrage/datastructure/gemini"
+	"github.com/alessiosavi/GoArbitrage/datastructure/market"
 	"github.com/alessiosavi/GoArbitrage/utils"
 	fileutils "github.com/alessiosavi/GoGPUtils/files"
 	req "github.com/alessiosavi/Requests"
@@ -28,12 +29,17 @@ var GEMINI_ORDERBOOK_DATA string = path.Join(constants.GEMINI_PATH, "orders/")
 type Gemini struct {
 	PairsNames []string `json:"pairs_name"`
 	// Pairs      []datastructure.GeminiPairs     `json:"pairs_info"`
-	OrderBook []datastructure.GeminiOrderBook `json:"orderbook"`
-	PairsInfo []datastructure.GeminiPairs     `json:"pairs_info"`
-	MakerFee  float32                         `json:"maker_fee"`
-	TakerFees float32                         `json:"taker_fee"`
+	OrderBook map[string]datastructure.GeminiOrderBook `json:"orderbook"`
+	PairsInfo map[string]datastructure.GeminiPairs     `json:"pairs_info"`
+	MakerFee  float32                                  `json:"maker_fee"`
+	TakerFees float32                                  `json:"taker_fee"`
 	// FeePercent is delegated to save if the fee is in percent or in coin
 	FeePercent bool `json:"fee_percent"`
+}
+
+func (g *Gemini) Init() {
+	g.OrderBook = make(map[string]datastructure.GeminiOrderBook)
+	g.PairsInfo = make(map[string]datastructure.GeminiPairs)
 }
 
 // GetPairsList is delegated to retrieve the type of pairs in the Gemini market
@@ -94,21 +100,30 @@ func (g *Gemini) GetPairsDetails() error {
 	var err error
 	var data []byte
 
-	if fileutils.FileExists(GEMINI_PAIRS_DETAILS) {
-		zap.S().Debugw("Data alredy present, avoiding to call the service")
-		data, err = ioutil.ReadFile(GEMINI_PAIRS_DETAILS)
-		if err != nil {
-			zap.S().Warnw("Error reading data: " + err.Error())
-			return err
-		}
+	if !fileutils.FileExists(GEMINI_PAIRS_DETAILS) {
+		zap.S().Warn("ERROR! File [" + GEMINI_PAIRS_DETAILS + "] not found!")
 	}
-	err = json.Unmarshal(data, &g.PairsInfo)
 
+	data, err = ioutil.ReadFile(GEMINI_PAIRS_DETAILS)
 	if err != nil {
-		zap.S().Warnw("Error during unmarshal! Err: " + err.Error())
+		zap.S().Warn("Error reading data: " + err.Error())
 		return err
 	}
 
+	var pairs []datastructure.GeminiPairs
+	err = json.Unmarshal(data, &pairs)
+	if err != nil {
+		zap.S().Warn("Error during unmarshal! Err: " + err.Error())
+		return err
+	}
+
+	// Save pairs as a map
+	for i := range pairs {
+		g.PairsInfo[pairs[i].Pair] = pairs[i]
+	}
+
+	// Update the file with the new data
+	utils.DumpStruct(g.PairsInfo, GEMINI_PAIRS_DETAILS+"_map")
 	return nil
 }
 
@@ -119,7 +134,7 @@ func (g *Gemini) GetAllOrderBook() error {
 	var err error
 
 	for _, pair := range g.PairsNames {
-
+		zap.S().Debugw("Managin pair: [" + pair + "]")
 		var orderbook datastructure.GeminiOrderBook
 		orderbook.Pair = pair
 		file_data := path.Join(GEMINI_ORDERBOOK_DATA, pair+".json")
@@ -129,7 +144,7 @@ func (g *Gemini) GetAllOrderBook() error {
 			data, err = ioutil.ReadFile(file_data)
 			if err != nil {
 				zap.S().Warnw("Error reading data: " + err.Error())
-				return err
+				continue
 			}
 		} else {
 			// NOTE: limit the response to only 3 orders
@@ -139,7 +154,7 @@ func (g *Gemini) GetAllOrderBook() error {
 			resp := request.SendRequest(url, "GET", nil, false)
 			if resp.Error != nil {
 				zap.S().Warnw("Error during http request. Err: " + resp.Error.Error())
-				return resp.Error
+				continue
 			}
 			if resp.StatusCode != 200 {
 				zap.S().Warnw("Received a non 200 status code: " + strconv.Itoa(resp.StatusCode) + " for pair [" + pair + "]")
@@ -157,12 +172,43 @@ func (g *Gemini) GetAllOrderBook() error {
 			// Update the file with the new data
 			utils.DumpStruct(orderbook, file_data)
 		}
-
 	}
 
-	g.OrderBook = orders
+	for i := range orders {
+		g.OrderBook[orders[i].Pair] = orders[i]
+	}
 
 	// Update the file with the new data
 	utils.DumpStruct(g.OrderBook, path.Join(constants.GEMINI_PATH, "orders_all.json"))
 	return nil
+}
+
+func (g *Gemini) GetMarketData(pair string) (market.Market, error) {
+	var markets market.Market
+	markets.Asks = make(map[string][]market.MarketOrder, len(g.OrderBook))
+	markets.Bids = make(map[string][]market.MarketOrder, len(g.OrderBook))
+	markets.MarketName = `GEMINI`
+	var order market.MarketOrder
+	if orders, ok := g.OrderBook[pair]; ok {
+		var asks []market.MarketOrder = make([]market.MarketOrder, len(orders.Asks))
+		for i, ask := range orders.Asks {
+			price, _ := strconv.ParseFloat(ask.Price, 64)
+			volume, _ := strconv.ParseFloat(ask.Volume, 64)
+			order.Price = price
+			order.Volume = volume
+			asks[i] = order
+		}
+		var bids []market.MarketOrder = make([]market.MarketOrder, len(orders.Bids))
+		for i, bid := range orders.Bids {
+			price, _ := strconv.ParseFloat(bid.Price, 64)
+			volume, _ := strconv.ParseFloat(bid.Volume, 64)
+			order.Price = price
+			order.Volume = volume
+			bids[i] = order
+		}
+		markets.Asks[pair] = asks
+		markets.Bids[pair] = bids
+		return markets, nil
+	}
+	return markets, errors.New("unable to find pair [" + pair + "]")
 }

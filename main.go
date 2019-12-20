@@ -1,14 +1,13 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
-	constants "github.com/alessiosavi/GoArbitrage/datastructure"
+	constants "github.com/alessiosavi/GoArbitrage/datastructure/constants"
 	"github.com/alessiosavi/GoArbitrage/markets/bitfinex"
 	"github.com/alessiosavi/GoArbitrage/markets/gemini"
 	"github.com/alessiosavi/GoArbitrage/markets/kraken"
@@ -17,7 +16,7 @@ import (
 
 func main() {
 
-	loggerMgr := initZapLog()
+	loggerMgr := initZapLog(zap.DebugLevel)
 	zap.ReplaceGlobals(loggerMgr)
 	defer loggerMgr.Sync() // flushes buffer, if any
 	logger := loggerMgr.Sugar()
@@ -26,39 +25,47 @@ func main() {
 
 	log.SetFlags(log.LstdFlags | log.Lmicroseconds | log.Lshortfile)
 	// Log configuration
+	var bitfinex bitfinex.Bitfinex
+	bitfinex.Init()
+	bitfinex.SetFees()
+	bitfinex.GetPairsList()
+	bitfinex.GetAllOrderBook()
+	log.Println(bitfinex.GetMarketData("etheur"))
+	//log.Println(fmt.Sprintf("Bitfinex %#v\n", bitfinex))
 
-	// var bitfinex bitfinex.Bitfinex
-	// bitfinex.SetFees()
-	// bitfinex.GetPairsList()
-	// bitfinex.GetAllOrderBook()
-	// log.Println(fmt.Sprintf("Bitfinex %#v\n", bitfinex))
-
-	// var okcoin okcoin.OkCoin
-	// okcoin.GetPairsList()
-	// okcoin.GetPairsDetails()
-	// okcoin.GetAllOrderBook()
+	var okcoin okcoin.OkCoin
+	okcoin.Init()
+	okcoin.GetPairsList()
+	okcoin.GetPairsDetails()
+	okcoin.GetAllOrderBook()
+	log.Println(okcoin.GetMarketsData())
+	log.Println(okcoin.GetMarketData("ETH-EUR"))
 	// log.Println(fmt.Sprintf("OkCoin %#v\n", okcoin))
 
-	// var gemini gemini.Gemini
-	// gemini.GetPairsList()
-	// gemini.GetAllOrderBook()
-	// gemini.GetPairsDetails()
+	var gemini gemini.Gemini
+	gemini.Init()
+	gemini.GetPairsList()
+	gemini.GetAllOrderBook()
+	gemini.GetPairsDetails()
+	log.Println(gemini.GetMarketData("bchbtc"))
 	// log.Println(fmt.Sprintf("Gemini %#v\n", gemini))
 
 	var kraken kraken.Kraken
 	kraken.Init()
 	kraken.GetPairsDetails()
 	kraken.GetAllOrderBook()
-	log.Println(fmt.Sprintf("Kraken %#v\n", kraken))
+	log.Println(kraken.GetMarketData("ETHEUR"))
+	// log.Println(fmt.Sprintf("Kraken %#v\n", kraken))
 }
 
-func initZapLog() *zap.Logger {
+func initZapLog(logLevel zapcore.Level) *zap.Logger {
 	config := zap.NewDevelopmentConfig()
 	config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 	config.EncoderConfig.TimeKey = "timestamp"
 	config.EncoderConfig.EncodeTime = zapcore.RFC3339NanoTimeEncoder
 	//zapcore.ISO8601TimeEncoder
 	logger, _ := config.Build()
+	config.Level.SetLevel(logLevel)
 	return logger
 }
 
