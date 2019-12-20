@@ -100,23 +100,27 @@ func (g *Gemini) GetPairsDetails() error {
 	var err error
 	var data []byte
 
-	if fileutils.FileExists(GEMINI_PAIRS_DETAILS) {
-		zap.S().Debugw("Data alredy present, avoiding to call the service")
-		data, err = ioutil.ReadFile(GEMINI_PAIRS_DETAILS)
-		if err != nil {
-			zap.S().Warnw("Error reading data: " + err.Error())
-			return err
-		}
+	if !fileutils.FileExists(GEMINI_PAIRS_DETAILS) {
+		zap.S().Warn("ERROR! File [" + GEMINI_PAIRS_DETAILS + "] not found!")
 	}
-	err = json.Unmarshal(data, &g.PairsInfo)
+
+	data, err = ioutil.ReadFile(GEMINI_PAIRS_DETAILS)
 	if err != nil {
-		zap.S().Warnw("Error during unmarshal! Err: " + err.Error())
+		zap.S().Warn("Error reading data: " + err.Error())
 		return err
 	}
 
-	// for i := range pairs {
-	// 	g.PairsInfo[pairs[i].Pair] = pairs[i]
-	// }
+	var pairs []datastructure.GeminiPairs
+	err = json.Unmarshal(data, &pairs)
+	if err != nil {
+		zap.S().Warn("Error during unmarshal! Err: " + err.Error())
+		return err
+	}
+
+	// Save pairs as a map
+	for i := range pairs {
+		g.PairsInfo[pairs[i].Pair] = pairs[i]
+	}
 
 	// Update the file with the new data
 	utils.DumpStruct(g.PairsInfo, GEMINI_PAIRS_DETAILS+"_map")

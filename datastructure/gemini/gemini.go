@@ -6,7 +6,7 @@ type GeminiPairsList struct {
 
 type GeminiOrder struct {
 	Price     string `json:"price"`
-	Volume    string `json:"volume"`
+	Volume    string `json:"amount"`
 	Timestamp string `json:"timestamp"`
 }
 

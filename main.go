@@ -16,7 +16,7 @@ import (
 
 func main() {
 
-	loggerMgr := initZapLog()
+	loggerMgr := initZapLog(zap.DebugLevel)
 	zap.ReplaceGlobals(loggerMgr)
 	defer loggerMgr.Sync() // flushes buffer, if any
 	logger := loggerMgr.Sugar()
@@ -38,16 +38,16 @@ func main() {
 	okcoin.GetPairsList()
 	okcoin.GetPairsDetails()
 	okcoin.GetAllOrderBook()
-	//log.Println(okcoin.GetMarketsData())
+	log.Println(okcoin.GetMarketsData())
 	log.Println(okcoin.GetMarketData("ETH-EUR"))
 	// log.Println(fmt.Sprintf("OkCoin %#v\n", okcoin))
 
-	// var gemini gemini.Gemini
-	// gemini.Init()
-	// gemini.GetPairsList()
-	// gemini.GetAllOrderBook()
-	// gemini.GetPairsDetails()
-	// log.Println(gemini.GetMarketData("bchbtc"))
+	var gemini gemini.Gemini
+	gemini.Init()
+	gemini.GetPairsList()
+	gemini.GetAllOrderBook()
+	gemini.GetPairsDetails()
+	log.Println(gemini.GetMarketData("bchbtc"))
 	// log.Println(fmt.Sprintf("Gemini %#v\n", gemini))
 
 	var kraken kraken.Kraken
@@ -58,14 +58,14 @@ func main() {
 	// log.Println(fmt.Sprintf("Kraken %#v\n", kraken))
 }
 
-func initZapLog() *zap.Logger {
+func initZapLog(logLevel zapcore.Level) *zap.Logger {
 	config := zap.NewDevelopmentConfig()
 	config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 	config.EncoderConfig.TimeKey = "timestamp"
 	config.EncoderConfig.EncodeTime = zapcore.RFC3339NanoTimeEncoder
 	//zapcore.ISO8601TimeEncoder
 	logger, _ := config.Build()
-	config.Level.SetLevel(zap.InfoLevel)
+	config.Level.SetLevel(logLevel)
 	return logger
 }
 

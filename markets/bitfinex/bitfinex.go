@@ -7,7 +7,6 @@ import (
 	"path"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/alessiosavi/GoArbitrage/utils"
 	"go.uber.org/zap"
@@ -155,7 +154,7 @@ func (b *Bitfinex) GetAllOrderBook() error {
 				continue
 			}
 		} else {
-			time.Sleep(2 * time.Second)
+			//time.Sleep(2 * time.Second)
 			url := BITFINEX_ORDER_BOOK_URL + pair
 			zap.S().Debugw("Sendind request to [" + url + "]")
 			// Call the HTTP method for retrieve the pairs

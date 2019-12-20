@@ -2,7 +2,6 @@ package kraken
 
 import (
 	"encoding/json"
-	"log"
 	"time"
 )
 
@@ -51,7 +50,6 @@ func (b *BitfinexOrder) UnmarshalJSON(data []byte) error {
 		b.Timestamp = order.Timestamp
 		return nil
 	}
-	log.Println("Packed data: ", packedData)
 	b.Price = packedData[0].String()
 	b.Volume = packedData[1].String()
 	t, err := packedData[2].Int64()
