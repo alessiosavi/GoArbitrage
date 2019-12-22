@@ -17,30 +17,31 @@ type KrakenPair struct {
 	FeeVolumeCurrency string      `json:"fee_volume_currency"`
 }
 
-type BitfinexOrderBook struct {
-	Pair string          `json:"pair"`
-	Asks []BitfinexOrder `json:"asks"`
-	Bids []BitfinexOrder `json:"bids"`
+type KrakenOrderBook struct {
+	Pair string        `json:"pair"`
+	Asks []KrakenOrder `json:"asks"`
+	Bids []KrakenOrder `json:"bids"`
 }
 
-type BitfinexOrder struct {
+type KrakenOrder struct {
 	Price     string    `json:"price"`
 	Volume    string    `json:"volume"`
 	Timestamp time.Time `json:"timestamp"`
 }
+type KrakenOrderJson KrakenOrder
 
 type Response struct {
-	Error  []interface{}                `json:"error"`
-	Result map[string]BitfinexOrderBook `json:"result"`
+	Error  []interface{}              `json:"error"`
+	Result map[string]KrakenOrderBook `json:"result"`
 }
 
 // UnmarshalJSON decode a BifinexOrder.
-func (b *BitfinexOrder) UnmarshalJSON(data []byte) error {
+func (b *KrakenOrder) UnmarshalJSON(data []byte) error {
 	var packedData []json.Number
-	err := json.Unmarshal(data, &packedData)
+	var err error
+	err = json.Unmarshal(data, &packedData)
 	if err != nil {
-		type BitfinexOrderJson BitfinexOrder
-		var order BitfinexOrderJson
+		var order KrakenOrderJson
 		err = json.Unmarshal(data, &order)
 		if err != nil {
 			return err

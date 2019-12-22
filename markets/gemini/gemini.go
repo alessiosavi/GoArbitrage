@@ -149,7 +149,7 @@ func (g *Gemini) GetAllOrderBook() error {
 			}
 		} else {
 			// NOTE: limit the response to only 3 orders
-			url := GEMINI_ORDER_BOOK_URL + pair + "?limit_bids=3&limit_asks=3"
+			url := GEMINI_ORDER_BOOK_URL + pair + "?limit_bids=1&limit_asks=1"
 			zap.S().Debugw("Sendind request to [" + url + "]")
 			// Call the HTTP method for retrieve the pairs
 			resp := request.SendRequest(url, "GET", nil, false)
@@ -247,4 +247,42 @@ func (g *Gemini) GetMarketsData() market.Market {
 	}
 
 	return markets
+}
+
+func (g *Gemini) GetOrderBook(pair string) error {
+	var request req.Request
+	var order datastructure.GeminiOrderBook
+	var data []byte
+	var err error
+
+	// NOTE: limit the response to only 3 orders
+	url := GEMINI_ORDER_BOOK_URL + pair + "?limit_bids=1&limit_asks=1"
+	zap.S().Debugw("Sendind request to [" + url + "]")
+	// Call the HTTP method for retrieve the pairs
+	resp := request.SendRequest(url, "GET", nil, false)
+	if resp.Error != nil {
+		zap.S().Warnw("Error during http request. Err: " + resp.Error.Error())
+		return err
+	}
+
+	if resp.StatusCode != 200 {
+		zap.S().Warnw("Received a non 200 status code: " + strconv.Itoa(resp.StatusCode) + " for pair [" + pair + "]")
+		return errors.New("NOT_200_HTTP_STATUS")
+	}
+	data = resp.Body
+
+	err = json.Unmarshal(data, &order)
+	if err != nil {
+		zap.S().Warnw("Error during unmarshal pair [" + pair + "]! Err: " + err.Error())
+		return err
+	}
+
+	if len(g.OrderBook) == 0 {
+		g.OrderBook = make(map[string]datastructure.GeminiOrderBook)
+	}
+	// Update the file with the new data
+	//utils.DumpStruct(order, path.Join(GEMINI_ORDERBOOK_DATA, pair+".json"))
+
+	// Update the file with the new data
+	return nil
 }

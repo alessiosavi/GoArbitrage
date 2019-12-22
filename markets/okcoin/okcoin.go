@@ -212,6 +212,44 @@ func (ok *OkCoin) GetPairsDetails() error {
 	return nil
 }
 
+func (ok *OkCoin) GetOrderBook(pair string) error {
+	var request req.Request
+	var order datastructure.OkCoinOrderBook
+	var data []byte
+	var err error
+
+	url := OKCOIN_PAIRS_DETAILS_URL + pair + "/book?size=1"
+	zap.S().Debug("Sendind request to [" + url + "]")
+	// Call the HTTP method for retrieve the pairs
+	resp := request.SendRequest(url, "GET", nil, false)
+	if resp.Error != nil {
+		zap.S().Debug("Error during http request. Err: " + resp.Error.Error())
+		return resp.Error
+	}
+	if resp.StatusCode != 200 {
+		zap.S().Warnw("Received a non 200 status code: " + strconv.Itoa(resp.StatusCode) + " for pair [" + pair + "]")
+		log.Println("Request -> ", request)
+		log.Println("Response -> ", resp.Dump())
+		return errors.New("NOT_200_HTTP_STATUS")
+	}
+	data = resp.Body
+
+	err = json.Unmarshal(data, &order)
+	if err != nil {
+		zap.S().Debugw("Error during unmarshal! Err: " + err.Error())
+		return err
+	}
+
+	if len(ok.OrderBook) == 0 {
+		ok.OrderBook = make(map[string]datastructure.OkCoinOrderBook)
+	}
+	ok.OrderBook[pair] = order
+
+	// Update the file with the new data
+	//utils.DumpStruct(order, path.Join(OKCOIN_ORDERBOOK_DATA, pair+".json"))
+	return nil
+}
+
 func (ok *OkCoin) GetAllOrderBook() error {
 	var request req.Request
 	var orders map[string]datastructure.OkCoinOrderBook = make(map[string]datastructure.OkCoinOrderBook, len(ok.PairsName))
@@ -237,7 +275,7 @@ func (ok *OkCoin) GetAllOrderBook() error {
 			}
 		} else {
 			time.Sleep(100 * time.Millisecond)
-			url := OKCOIN_PAIRS_DETAILS_URL + pair + "/book"
+			url := OKCOIN_PAIRS_DETAILS_URL + pair + "/book?size=1"
 			zap.S().Debugw("Sendind request to [" + url + "]")
 			// Call the HTTP method for retrieve the pairs
 			resp := request.SendRequest(url, "GET", nil, false)
@@ -288,4 +326,37 @@ func getBookUrl(pairs string, size int, depth float64) string {
 	}
 
 	return url
+}
+
+var allowed_base []string = []string{"EUR", "EURS", "USD", "USDT", "SGD"}
+
+// ParsePair is delegated to convert the given pair into the pair compliant with kraken
+func (o *OkCoin) ParsePair(pair string) string {
+
+	// Expected PAIR-BASE => adausd --> ADA-USD
+
+	if strings.Contains(pair, "-") {
+		return pair
+	}
+
+	// 1 Extract the last 3 char from the string
+
+	lastchars := strings.ToUpper(pair[len(pair)-3:])
+
+	var newpair string
+
+	// 2 Switch case for verify if the coin is in the base allowed
+
+	for i := range allowed_base {
+		if lastchars == allowed_base[i] {
+			// 3 If is a 3char pair, than add a `-` just before the 3 char
+			newpair = strings.ToUpper(pair[:len(pair)-3] + "-" + lastchars)
+			return newpair
+		}
+	}
+
+	// 4 If not, then take 4 char and add a `-` just before the 4 char
+	newpair = strings.ToUpper(pair[:len(pair)-4] + "-" + pair[len(pair)-4:])
+
+	return newpair
 }

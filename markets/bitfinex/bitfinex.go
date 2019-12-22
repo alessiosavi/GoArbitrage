@@ -155,7 +155,7 @@ func (b *Bitfinex) GetAllOrderBook() error {
 			}
 		} else {
 			//time.Sleep(2 * time.Second)
-			url := BITFINEX_ORDER_BOOK_URL + pair
+			url := BITFINEX_ORDER_BOOK_URL + pair + "?limit_bids=1&limit_asks=1"
 			zap.S().Debugw("Sendind request to [" + url + "]")
 			// Call the HTTP method for retrieve the pairs
 			resp := request.SendRequest(url, "GET", nil, false)
@@ -257,4 +257,48 @@ func (b *Bitfinex) GetMarketsData() market.Market {
 	}
 
 	return markets
+}
+
+func (b *Bitfinex) GetOrderBook(pair string) error {
+	var request req.Request
+	var data []byte
+	var orderbook datastructure.BitfinexOrderBook
+	var err error
+
+	zap.S().Debugw("Managin pair: [" + pair + "]")
+	if strings.Contains(pair, ":") {
+		zap.S().Info("[" + pair + "] is not a tradable pair")
+		return errors.New("PAIRS_NOT_TRADABLE")
+	}
+	orderbook.Pair = pair
+
+	url := BITFINEX_ORDER_BOOK_URL + pair + "?limit_bids=1&limit_asks=1"
+	zap.S().Debugw("Sendind request to [" + url + "]")
+	// Call the HTTP method for retrieve the pairs
+	resp := request.SendRequest(url, "GET", nil, false)
+	if resp.Error != nil {
+		zap.S().Warnw("Error during http request. Err: " + resp.Error.Error())
+		return resp.Error
+	}
+	if resp.StatusCode != 200 {
+		zap.S().Warnw("Received a non 200 status code for pair [" + pair + "]: " + strconv.Itoa(resp.StatusCode) + " for pair [" + pair + "]")
+		return errors.New("NOT_200_HTTP_STATUS")
+	}
+	data = resp.Body
+
+	err = json.Unmarshal(data, &orderbook)
+
+	if err != nil {
+		zap.S().Debugw("Error during unmarshal pair [" + pair + "]! Err: " + err.Error())
+		return err
+	}
+
+	if len(b.OrderBook) == 0 {
+		b.OrderBook = make(map[string]datastructure.BitfinexOrderBook)
+	}
+	b.OrderBook[pair] = orderbook
+	// Update the file with the new data
+	// utils.DumpStruct(b.OrderBook[pair], path.Join(BITFINEX_ORDERBOOK_DATA, pair+".json"))
+
+	return nil
 }

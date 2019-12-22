@@ -60,7 +60,7 @@ func main() {
 
 	var markets []market.Market
 
-	markets = append(markets, gemini.GetMarketsData())
+	//markets = append(markets, gemini.GetMarketsData())
 	markets = append(markets, kraken.GetMarketsData())
 	markets = append(markets, bitfinex.GetMarketsData())
 	markets = append(markets, okcoin.GetMarketsData())

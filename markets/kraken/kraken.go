@@ -23,10 +23,9 @@ import (
 type Kraken struct {
 	PairsNames []string
 	Pairs      map[string]datastructure.KrakenPair
-	OrderBook  map[string]datastructure.BitfinexOrderBook
+	OrderBook  map[string]datastructure.KrakenOrderBook
 }
 
-const KRAKEN_PAIRS_URL string = `https://api.bitfinex.com/v1/symbols`
 const KRAKEN_PAIRS_DETAILS_URL string = `https://api.kraken.com/0/public/AssetPairs`
 const KRAKEN_ORDER_BOOK_URL string = `https://api.kraken.com/0/public/Depth?pair=`
 
@@ -36,7 +35,7 @@ var KRAKEN_ORDERBOOK_DATA string = path.Join(constants.KRAKEN_PATH, "orders/")
 
 func (k *Kraken) Init() {
 	k.Pairs = make(map[string]datastructure.KrakenPair)
-	k.OrderBook = make(map[string]datastructure.BitfinexOrderBook)
+	k.OrderBook = make(map[string]datastructure.KrakenOrderBook)
 }
 
 // GetPairsDetails is delegated to retrieve the pairs detail and the pairs names
@@ -106,7 +105,7 @@ func (k *Kraken) GetAllOrderBook() error {
 	var data []byte
 
 	for _, pair := range k.PairsNames {
-		var order datastructure.BitfinexOrderBook
+		var order datastructure.KrakenOrderBook
 		zap.S().Debugw("Managin pair: [" + pair + "]")
 		file := path.Join(KRAKEN_ORDERBOOK_DATA, pair+".json")
 		if fileutils.FileExists(file) {
@@ -126,7 +125,7 @@ func (k *Kraken) GetAllOrderBook() error {
 				k.OrderBook[pair] = order
 			}
 		} else {
-			url := KRAKEN_ORDER_BOOK_URL + pair + `&count=4`
+			url := KRAKEN_ORDER_BOOK_URL + pair + `&count=1`
 			zap.S().Debugw("Sendind request to [" + url + "]")
 			// Call the HTTP method for retrieve the pairs
 			resp := request.SendRequest(url, "GET", nil, false)
@@ -156,12 +155,12 @@ func (k *Kraken) GetAllOrderBook() error {
 	return nil
 }
 
-func loadOrderBook(data []byte) (datastructure.BitfinexOrderBook, error) {
+func loadOrderBook(data []byte) (datastructure.KrakenOrderBook, error) {
 	res := &datastructure.Response{}
 	var err error
 	if err = json.Unmarshal(data, res); err != nil {
 		zap.S().Warn("ERROR! :" + err.Error())
-		return datastructure.BitfinexOrderBook{}, err
+		return datastructure.KrakenOrderBook{}, err
 	}
 	// Will have only 1 key
 	for key /*,value*/ := range res.Result {
@@ -175,7 +174,7 @@ func loadOrderBook(data []byte) (datastructure.BitfinexOrderBook, error) {
 		// }
 		return res.Result[key], nil
 	}
-	return datastructure.BitfinexOrderBook{}, err
+	return datastructure.KrakenOrderBook{}, err
 }
 
 // loadKrakenPairs is delegated to load the data related to pairs info
@@ -281,4 +280,45 @@ func (k *Kraken) GetMarketsData() market.Market {
 	}
 
 	return markets
+}
+
+func (k *Kraken) GetOrderBook(pair string) error {
+	var request req.Request
+	var err error
+	var data []byte
+
+	var order datastructure.KrakenOrderBook
+	zap.S().Debugw("Managin pair: [" + pair + "]")
+	url := KRAKEN_ORDER_BOOK_URL + pair + `&count=1`
+	zap.S().Debugw("Sendind request to [" + url + "]")
+	// Call the HTTP method for retrieve the pairs
+	resp := request.SendRequest(url, "GET", nil, false)
+	if resp.Error != nil {
+		zap.S().Warnw("Error during http request. Err: " + resp.Error.Error())
+		return err
+	}
+	if resp.StatusCode != 200 {
+		zap.S().Warnw("Received a non 200 status code: " + strconv.Itoa(resp.StatusCode))
+		return errors.New("NOT_200_HTTP_STATUS")
+	}
+	data = resp.Body
+
+	order, err = loadOrderBook(data)
+	if err != nil {
+		zap.S().Warnw("Error during retrieve of pair [" + pair + "]!")
+		return err
+	}
+	order.Pair = pair
+	if len(k.OrderBook) == 0 {
+		k.OrderBook = map[string]datastructure.KrakenOrderBook{}
+	}
+	k.OrderBook[pair] = order
+	//utils.DumpStruct(order, path.Join(KRAKEN_ORDERBOOK_DATA, pair+".json"))
+	return nil
+}
+
+// ParsePair is delegated to convert the given pair into the pair compliant with kraken
+func (k *Kraken) ParsePair(pair string) string {
+
+	return strings.ToUpper(pair)
 }
