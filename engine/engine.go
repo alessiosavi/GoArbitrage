@@ -2,6 +2,7 @@ package engine
 
 import (
 	"log"
+	"sync"
 
 	"github.com/alessiosavi/GoArbitrage/datastructure/market"
 	"github.com/alessiosavi/GoArbitrage/markets/bitfinex"
@@ -58,50 +59,66 @@ func GetCommonCoin(markets ...market.Market) []string {
 func Arbitrage(pair string, markets []market.Market) {
 
 	var err error
+	var wg sync.WaitGroup
 	for i := range markets {
-
 		switch markets[i].MarketName {
 		case "KRAKEN":
-			var kraken kraken.Kraken
-			pair := kraken.ParsePair(pair)
-			if kraken.GetOrderBook(pair) == nil {
-				markets[i], err = kraken.GetMarketData(pair)
-				if err != nil {
-					log.Println("Unable to retrieve KRAKEN data ", err)
-					return
+			wg.Add(1)
+			go func(i int, wg *sync.WaitGroup) {
+				defer wg.Done()
+				var kraken kraken.Kraken
+				pair := kraken.ParsePair(pair)
+				if kraken.GetOrderBook(pair) == nil {
+					markets[i], err = kraken.GetMarketData(pair)
+					if err != nil {
+						log.Println("Unable to retrieve KRAKEN data ", err)
+						return
+					}
 				}
-			}
+			}(i, &wg)
 		case "OKCOIN":
-			var okcoin okcoin.OkCoin
-			pair := okcoin.ParsePair(pair)
-			if okcoin.GetOrderBook(pair) == nil {
-				markets[i], err = okcoin.GetMarketData(pair)
-				if err != nil {
-					log.Println("Unable to retrieve OKCOIN data ", err)
-					return
+			wg.Add(1)
+			go func(i int, wg *sync.WaitGroup) {
+				defer wg.Done()
+				var okcoin okcoin.OkCoin
+				pair := okcoin.ParsePair(pair)
+				if okcoin.GetOrderBook(pair) == nil {
+					markets[i], err = okcoin.GetMarketData(pair)
+					if err != nil {
+						log.Println("Unable to retrieve OKCOIN data ", err)
+						return
+					}
 				}
-			}
+			}(i, &wg)
 		case "BITFINEX":
-			var bitfinex bitfinex.Bitfinex
-			if bitfinex.GetOrderBook(pair) == nil {
-				markets[i], err = bitfinex.GetMarketData(pair)
-				if err != nil {
-					log.Println("Unable to retrieve BITFINEX data ", err)
-					return
+			wg.Add(1)
+			go func(i int, wg *sync.WaitGroup) {
+				defer wg.Done()
+				var bitfinex bitfinex.Bitfinex
+				if bitfinex.GetOrderBook(pair) == nil {
+					markets[i], err = bitfinex.GetMarketData(pair)
+					if err != nil {
+						log.Println("Unable to retrieve BITFINEX data ", err)
+						return
+					}
 				}
-			}
+			}(i, &wg)
 		case "GEMINI":
-			var gemini gemini.Gemini
-			if gemini.GetOrderBook(pair) == nil {
-				markets[i], err = gemini.GetMarketData(pair)
-				if err != nil {
-					log.Println("Unable to retrieve GEMINI data: ", err)
-					return
+			wg.Add(1)
+			go func(i int, wg *sync.WaitGroup) {
+				defer wg.Done()
+				var gemini gemini.Gemini
+				if gemini.GetOrderBook(pair) == nil {
+					markets[i], err = gemini.GetMarketData(pair)
+					if err != nil {
+						log.Println("Unable to retrieve GEMINI data: ", err)
+						return
+					}
 				}
-			}
-
+			}(i, &wg)
 		}
 	}
+	wg.Wait()
 	var minBuy market.Market = markets[0]
 	var maxSell market.Market = markets[0]
 	var pair1, pair2, pair3 string

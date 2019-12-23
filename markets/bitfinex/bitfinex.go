@@ -231,7 +231,7 @@ func (b *Bitfinex) GetMarketsData() market.Market {
 	var key_standard string
 	markets.Asks = make(map[string][]market.MarketOrder, len(b.OrderBook))
 	markets.Bids = make(map[string][]market.MarketOrder, len(b.OrderBook))
-	markets.MarketName = `Bitfinex`
+	markets.MarketName = `BITFINEX`
 	// var i int
 	var order market.MarketOrder
 	for key := range b.OrderBook {
