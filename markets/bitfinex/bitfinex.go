@@ -205,6 +205,7 @@ func (b *Bitfinex) GetMarketData(pair string) (market.Market, error) {
 	markets.Asks = make(map[string][]market.MarketOrder, len(b.OrderBook))
 	markets.Bids = make(map[string][]market.MarketOrder, len(b.OrderBook))
 	markets.MarketName = `BITFINEX`
+	minVolume, _ := strconv.ParseFloat(b.Pairs[pair].MinOrder, 64)
 	var order market.MarketOrder
 	if orders, ok := b.OrderBook[pair]; ok {
 		var asks []market.MarketOrder = make([]market.MarketOrder, len(orders.Asks))
@@ -213,6 +214,7 @@ func (b *Bitfinex) GetMarketData(pair string) (market.Market, error) {
 			volume, _ := strconv.ParseFloat(ask.Volume, 64)
 			order.Price = price
 			order.Volume = volume
+			order.MinVolume = minVolume
 			asks[i] = order
 		}
 		var bids []market.MarketOrder = make([]market.MarketOrder, len(orders.Bids))
@@ -221,11 +223,11 @@ func (b *Bitfinex) GetMarketData(pair string) (market.Market, error) {
 			volume, _ := strconv.ParseFloat(bid.Volume, 64)
 			order.Price = price
 			order.Volume = volume
+			order.MinVolume = minVolume
 			bids[i] = order
 		}
 		markets.Asks[pair] = asks
 		markets.Bids[pair] = bids
-		markets.MinVolume, _ = strconv.ParseFloat(b.Pairs[pair].MinOrder, 64)
 		markets.MakerFee = b.MakerFee
 		markets.TakerFee = b.TakerFees
 		return markets, nil

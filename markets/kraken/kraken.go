@@ -160,7 +160,6 @@ func (k *Kraken) GetAllOrderBook() error {
 				utils.DumpStruct(order, file)
 			}
 		}
-
 	}
 
 	utils.DumpStruct(k.OrderBook, path.Join(constants.KRAKEN_PATH, "orders_all.json"))
@@ -267,8 +266,12 @@ func (k *Kraken) GetMarketsData() market.Market {
 	markets.Asks = make(map[string][]market.MarketOrder, len(k.OrderBook))
 	markets.Bids = make(map[string][]market.MarketOrder, len(k.OrderBook))
 	markets.MarketName = `KRAKEN`
+	markets.MakerFee = k.MakerFee
+	markets.TakerFee = k.TakerFees
 	// var i int
 	var order market.MarketOrder
+	amounts := utils.LoadMinAmountKraken(path.Join(constants.KRAKEN_PATH, "min_amount.txt"))
+
 	for key := range k.OrderBook {
 		key_standard = strings.Replace(strings.ToLower(key), "-", "", 1)
 		var asks []market.MarketOrder = make([]market.MarketOrder, len(k.OrderBook[key].Asks))
@@ -290,6 +293,16 @@ func (k *Kraken) GetMarketsData() market.Market {
 		}
 		markets.Asks[key_standard] = asks
 		markets.Bids[key_standard] = bids
+
+		for key := range amounts {
+			if strings.HasPrefix(key_standard, key) {
+				for i := range markets.Asks[key_standard] {
+					markets.Asks[key_standard][i].MinVolume = amounts[key]
+					markets.Bids[key_standard][i].MinVolume = amounts[key]
+				}
+				break
+			}
+		}
 	}
 
 	return markets

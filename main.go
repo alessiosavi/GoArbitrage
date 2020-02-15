@@ -22,9 +22,9 @@ func main() {
 	defer loggerMgr.Sync() // flushes buffer, if any
 	logger := loggerMgr.Sugar()
 	logger.Infow("GoArbitrage started!")
+	log.SetFlags(log.LstdFlags | log.Lmicroseconds | log.Lshortfile)
 	initDataFolder()
 
-	log.SetFlags(log.LstdFlags | log.Lmicroseconds | log.Lshortfile)
 	// Log configuration
 	var bitfinex bitfinex.Bitfinex
 	bitfinex.Init()
@@ -67,8 +67,8 @@ func main() {
 	markets = append(markets, okcoin.GetMarketsData())
 
 	pairs := engine.GetCommonCoin(markets...)
-	log.Println("Pairs in common: ", pairs)
-
+	//	log.Println("Pairs in common: ", pairs)
+	zap.S().Infof("Common pairs: %v", pairs)
 	for _, pair := range pairs {
 		engine.Arbitrage(pair, markets)
 	}

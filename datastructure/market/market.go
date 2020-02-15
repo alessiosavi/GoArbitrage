@@ -4,16 +4,16 @@ type Market struct {
 	// Name of the market
 	MarketName string `json:"market_name"`
 	// Asks and Bids contains the coin pair as a key and the value of the order
-	Asks      map[string][]MarketOrder `json:"asks"`
-	Bids      map[string][]MarketOrder `json:"bids"`
-	MinVolume float64                  `json:"min_volume"`
-	MakerFee  float64                  `json:"maker_fee"`
-	TakerFee  float64                  `json:"taker_fee"`
+	Asks     map[string][]MarketOrder `json:"asks"`
+	Bids     map[string][]MarketOrder `json:"bids"`
+	MakerFee float64                  `json:"maker_fee"`
+	TakerFee float64                  `json:"taker_fee"`
 }
 
 type MarketOrder struct {
-	Price  float64 `json:"price"`
-	Volume float64 `json:"volume"`
+	Price     float64 `json:"price"`
+	Volume    float64 `json:"volume"`
+	MinVolume float64 `json:"min_volume"`
 }
 
 // MarketFee struct will save the type of the fee for every pairs.
