@@ -18,7 +18,7 @@ import (
 
 func main() {
 
-	loggerMgr := initZapLog(zap.InfoLevel)
+	loggerMgr := initZapLog(zap.DebugLevel)
 	zap.ReplaceGlobals(loggerMgr)
 	defer loggerMgr.Sync() // flushes buffer, if any
 	logger := loggerMgr.Sugar()
@@ -60,7 +60,7 @@ func main() {
 
 	var markets []market.Market
 
-	//markets = append(markets, gemini.GetMarketsData())
+	// markets = append(markets, gemini.GetMarketsData())
 	markets = append(markets, kraken.GetMarketsData())
 	markets = append(markets, bitfinex.GetMarketsData())
 	markets = append(markets, okcoin.GetMarketsData())
@@ -88,26 +88,26 @@ func initZapLog(logLevel zapcore.Level) *zap.Logger {
 func initDataFolder() {
 	if _, err := os.Stat(gemini.GEMINI_ORDERBOOK_DATA); os.IsNotExist(err) {
 		zap.S().Debugw("Creating folder for GEMINI data ...")
-		os.Mkdir(constants.GEMINI_PATH, os.ModePerm)
-		os.Mkdir(gemini.GEMINI_ORDERBOOK_DATA, os.ModePerm)
+		os.MkdirAll(constants.GEMINI_PATH, os.ModePerm)
+		os.MkdirAll(gemini.GEMINI_ORDERBOOK_DATA, os.ModePerm)
 	}
 
 	if _, err := os.Stat(okcoin.OKCOIN_ORDERBOOK_DATA); os.IsNotExist(err) {
 		zap.S().Debugw("Creating folder for OKCOIN data ...")
-		os.Mkdir(constants.OKCOIN_PATH, os.ModePerm)
-		os.Mkdir(okcoin.OKCOIN_ORDERBOOK_DATA, os.ModePerm)
+		os.MkdirAll(constants.OKCOIN_PATH, os.ModePerm)
+		os.MkdirAll(okcoin.OKCOIN_ORDERBOOK_DATA, os.ModePerm)
 	}
 
 	if _, err := os.Stat(bitfinex.BITFINEX_ORDERBOOK_DATA); os.IsNotExist(err) {
 		zap.S().Debugw("Creating folder for BITFINEX data ...")
-		os.Mkdir(constants.BITFINEX_PATH, os.ModePerm)
-		os.Mkdir(bitfinex.BITFINEX_ORDERBOOK_DATA, os.ModePerm)
+		os.MkdirAll(constants.BITFINEX_PATH, os.ModePerm)
+		os.MkdirAll(bitfinex.BITFINEX_ORDERBOOK_DATA, os.ModePerm)
 	}
 
 	if _, err := os.Stat(kraken.KRAKEN_ORDERBOOK_DATA); os.IsNotExist(err) {
 		zap.S().Debugw("Creating folder for KRAKEN data ...")
-		os.Mkdir(constants.KRAKEN_PATH, os.ModePerm)
-		os.Mkdir(kraken.KRAKEN_ORDERBOOK_DATA, os.ModePerm)
+		os.MkdirAll(constants.KRAKEN_PATH, os.ModePerm)
+		os.MkdirAll(kraken.KRAKEN_ORDERBOOK_DATA, os.ModePerm)
 	}
 
 }

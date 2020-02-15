@@ -7,6 +7,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/alessiosavi/GoArbitrage/utils"
 	"go.uber.org/zap"
@@ -36,6 +37,7 @@ type Bitfinex struct {
 	FeePercent bool `json:"fee_percent"`
 }
 
+// Init is delegated to initialize the map for the given market
 func (b *Bitfinex) Init() {
 	b.Pairs = make(map[string]datastructure.BitfinexPair)
 	b.OrderBook = make(map[string]datastructure.BitfinexOrderBook)
@@ -131,6 +133,7 @@ func (b *Bitfinex) GetPairsDetails() error {
 	return nil
 }
 
+// GetAllOrderBook is delegated to retrieve the order book for all the currencies
 func (b *Bitfinex) GetAllOrderBook() error {
 	var request req.Request
 	var data []byte
@@ -154,7 +157,7 @@ func (b *Bitfinex) GetAllOrderBook() error {
 				continue
 			}
 		} else {
-			//time.Sleep(2 * time.Second)
+			time.Sleep(2 * time.Second)
 			url := BITFINEX_ORDER_BOOK_URL + pair + "?limit_bids=1&limit_asks=1"
 			zap.S().Debugw("Sendind request to [" + url + "]")
 			// Call the HTTP method for retrieve the pairs
@@ -188,12 +191,14 @@ func (b *Bitfinex) GetAllOrderBook() error {
 	return nil
 }
 
+// SetFees is delegated to initialize the fee type/amount for the given market
 func (b *Bitfinex) SetFees() {
 	b.MakerFee = 0.1
 	b.TakerFees = 0.2
 	b.FeePercent = false
 }
 
+// GetMarketData is delegated to convert the order book into a standard `market` struct
 func (b *Bitfinex) GetMarketData(pair string) (market.Market, error) {
 	var markets market.Market
 	markets.Asks = make(map[string][]market.MarketOrder, len(b.OrderBook))
@@ -232,7 +237,7 @@ func (b *Bitfinex) GetMarketsData() market.Market {
 	markets.Asks = make(map[string][]market.MarketOrder, len(b.OrderBook))
 	markets.Bids = make(map[string][]market.MarketOrder, len(b.OrderBook))
 	markets.MarketName = `BITFINEX`
-	// var i int
+
 	var order market.MarketOrder
 	for key := range b.OrderBook {
 		key_standard = strings.Replace(strings.ToLower(key), "-", "", 1)
@@ -259,6 +264,7 @@ func (b *Bitfinex) GetMarketsData() market.Market {
 	return markets
 }
 
+// GetOrderBook is delegated to retrieve the order book for the given pair
 func (b *Bitfinex) GetOrderBook(pair string) error {
 	var request req.Request
 	var data []byte

@@ -1,6 +1,4 @@
-data/BITFINEX/
-data/OKCOIN/
-data/GEMINI/
-data/KRAKEN/
+data/*
 GoArbitrage
 log
+.idea/

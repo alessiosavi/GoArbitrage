@@ -33,6 +33,7 @@ var KRAKEN_PAIRS_DATA string = path.Join(constants.KRAKEN_PATH, "pairs_list.json
 var KRAKEN_PAIRS_DETAILS string = path.Join(constants.KRAKEN_PATH, "pairs_info.json")
 var KRAKEN_ORDERBOOK_DATA string = path.Join(constants.KRAKEN_PATH, "orders/")
 
+// Init is delegated to initialize the maps for the kraken
 func (k *Kraken) Init() {
 	k.Pairs = make(map[string]datastructure.KrakenPair)
 	k.OrderBook = make(map[string]datastructure.KrakenOrderBook)
@@ -216,6 +217,7 @@ func loadKrakenPairs(data []byte) map[string]datastructure.KrakenPair {
 	return pairInfo
 }
 
+// GetMarketData is delegated to retrieve the data related to the order book
 func (k *Kraken) GetMarketData(pair string) (market.Market, error) {
 	var markets market.Market
 	markets.Asks = make(map[string][]market.MarketOrder, len(k.OrderBook))
@@ -319,6 +321,5 @@ func (k *Kraken) GetOrderBook(pair string) error {
 
 // ParsePair is delegated to convert the given pair into the pair compliant with kraken
 func (k *Kraken) ParsePair(pair string) string {
-
 	return strings.ToUpper(pair)
 }

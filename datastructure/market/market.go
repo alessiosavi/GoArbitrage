@@ -4,8 +4,10 @@ type Market struct {
 	// Name of the market
 	MarketName string `json:"market_name"`
 	// Asks and Bids contains the coin pair as a key and the value of the order
-	Asks map[string][]MarketOrder `json:"asks"`
-	Bids map[string][]MarketOrder `json:"bids"`
+	Asks      map[string][]MarketOrder `json:"asks"`
+	Bids      map[string][]MarketOrder `json:"bids"`
+	MinPrice  float64
+	MinVolume float64
 }
 
 type MarketOrder struct {

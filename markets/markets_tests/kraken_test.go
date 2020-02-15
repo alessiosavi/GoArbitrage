@@ -1,8 +1,9 @@
 package markets_test
 
 import (
-	"github.com/alessiosavi/GoArbitrage/markets/kraken"
 	"testing"
+
+	"github.com/alessiosavi/GoArbitrage/markets/kraken"
 )
 
 func Test_ParsePairKraken(t *testing.T) {

@@ -3,16 +3,17 @@ package engine
 import (
 	"log"
 	"sync"
+	"time"
 
 	"github.com/alessiosavi/GoArbitrage/datastructure/market"
 	"github.com/alessiosavi/GoArbitrage/markets/bitfinex"
 	"github.com/alessiosavi/GoArbitrage/markets/gemini"
 	"github.com/alessiosavi/GoArbitrage/markets/kraken"
 	"github.com/alessiosavi/GoArbitrage/markets/okcoin"
+	"go.uber.org/zap"
 )
 
 func GetCommonCoin(markets ...market.Market) []string {
-
 	// commonPairs will save the list of pairs in common for the given markets
 	var commonPairs []string
 
@@ -48,18 +49,17 @@ func GetCommonCoin(markets ...market.Market) []string {
 			log.Println("Pair [" + key + "] Is in common in all market!")
 			commonPairs = append(commonPairs, key)
 		}
-
 	}
-
 	log.Println("Common pairs: ", commonPairs)
 	return commonPairs
 }
 
 // Arbitrage is delegated to find the buy/sell
 func Arbitrage(pair string, markets []market.Market) {
-
 	var err error
 	var wg sync.WaitGroup
+	// Execute HTTP request in parallel
+	start := time.Now()
 	for i := range markets {
 		switch markets[i].MarketName {
 		case "KRAKEN":
@@ -119,6 +119,7 @@ func Arbitrage(pair string, markets []market.Market) {
 		}
 	}
 	wg.Wait()
+	zap.S().Info("Time execution: ", time.Since(start))
 	var minBuy market.Market = markets[0]
 	var maxSell market.Market = markets[0]
 	var pair1, pair2, pair3 string
@@ -128,22 +129,25 @@ func Arbitrage(pair string, markets []market.Market) {
 		pair3 = parsePair(pair, minBuy)
 		log.Println("Checking markets [" + markets[i].MarketName + "] against [" + minBuy.MarketName + "] with pair: [" + pair1 + "] for BUY")
 		//log.Println("Markets [", i, "] Asks:", markets[i].Asks[pair])
-		if markets[i].Bids[pair1][0].Price < minBuy.Bids[pair3][0].Price && markets[i].MarketName != maxSell.MarketName {
-			log.Println("Market [" + markets[i].MarketName + "] have a LESSER price than [" + minBuy.MarketName + "] FOR BUY")
-			minBuy = markets[i]
+		log.Printf("Pair %s  %s  %s \n", pair1, pair2, pair3)
+		if len(markets[i].Bids[pair1]) > 0 && len(minBuy.Bids[pair3]) > 0 && len(markets[i].Asks[pair1]) > 0 && len(maxSell.Asks[pair2]) > 0 {
+			if markets[i].Bids[pair1][0].Price < minBuy.Bids[pair3][0].Price && markets[i].MarketName != maxSell.MarketName {
+				log.Println("Market [" + markets[i].MarketName + "] have a LESSER price than [" + minBuy.MarketName + "] FOR BUY")
+				minBuy = markets[i]
+			}
+			log.Println("Checking markets [" + markets[i].MarketName + "] against [" + maxSell.MarketName + "] with pair: [" + pair2 + "] for BUY")
+			if markets[i].Asks[pair1][0].Price > maxSell.Asks[pair2][0].Price && markets[i].MarketName != maxSell.MarketName {
+				log.Println("Market [" + markets[i].MarketName + "] have a GREATER price than [" + maxSell.MarketName + "] FOR SELL")
+				maxSell = markets[i]
+			}
+			if minBuy.MarketName != maxSell.MarketName {
+				pair2 = parsePair(pair, maxSell)
+				pair3 = parsePair(pair, minBuy)
+				log.Println("Arbitrage opportunity for pair: [" + pair + "]")
+				log.Println("Buy Market:", minBuy.MarketName, "Price:", minBuy.Bids[pair3][0].Price, " Volume: ", minBuy.Bids[pair3][0].Volume)
+				log.Println("Sell Market:", maxSell.MarketName, "Price:", maxSell.Asks[pair2][0].Price, " Volume: ", maxSell.Asks[pair2][0].Volume)
+			}
 		}
-		log.Println("Checking markets [" + markets[i].MarketName + "] against [" + maxSell.MarketName + "] with pair: [" + pair2 + "] for BUY")
-		if markets[i].Asks[pair1][0].Price > maxSell.Asks[pair2][0].Price && markets[i].MarketName != maxSell.MarketName {
-			log.Println("Market [" + markets[i].MarketName + "] have a GREATER price than [" + maxSell.MarketName + "] FOR SELL")
-			maxSell = markets[i]
-		}
-	}
-	if minBuy.MarketName != maxSell.MarketName {
-		pair2 = parsePair(pair, maxSell)
-		pair3 = parsePair(pair, minBuy)
-		log.Println("Arbitrage opportunity for pair: [" + pair + "]")
-		log.Println("Buy Market:", minBuy.MarketName, "Price:", minBuy.Bids[pair3][0].Price, " Volume: ", minBuy.Bids[pair3][0].Volume)
-		log.Println("Sell Market:", maxSell.MarketName, "Price:", maxSell.Asks[pair2][0].Price, " Volume: ", maxSell.Asks[pair2][0].Volume)
 	}
 }
 
