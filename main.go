@@ -17,8 +17,7 @@ import (
 )
 
 func main() {
-
-	loggerMgr := initZapLog(zap.DebugLevel)
+	loggerMgr := initZapLog(zap.InfoLevel)
 	zap.ReplaceGlobals(loggerMgr)
 	defer loggerMgr.Sync() // flushes buffer, if any
 	logger := loggerMgr.Sugar()
@@ -29,7 +28,6 @@ func main() {
 	// Log configuration
 	var bitfinex bitfinex.Bitfinex
 	bitfinex.Init()
-	bitfinex.SetFees()
 	bitfinex.GetPairsList()
 	bitfinex.GetAllOrderBook()
 	//log.Println(bitfinex.GetMarketData("etheur"))
@@ -58,6 +56,9 @@ func main() {
 	//log.Println(kraken.GetMarketData("ETHEUR"))
 	// log.Println(fmt.Sprintf("Kraken %#v\n", kraken))
 
+	zap.S().Warnf("Bitfinex: %f - %f", bitfinex.MakerFee, bitfinex.TakerFees)
+	zap.S().Warnf("Gemini: %f - %f", gemini.MakerFee, gemini.TakerFees)
+	zap.S().Warnf("OkCoin: %f - %f", okcoin.MakerFee, okcoin.TakerFees)
 	var markets []market.Market
 
 	// markets = append(markets, gemini.GetMarketsData())
@@ -109,5 +110,4 @@ func initDataFolder() {
 		os.MkdirAll(constants.KRAKEN_PATH, os.ModePerm)
 		os.MkdirAll(kraken.KRAKEN_ORDERBOOK_DATA, os.ModePerm)
 	}
-
 }

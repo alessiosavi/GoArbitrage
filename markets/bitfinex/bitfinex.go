@@ -31,8 +31,8 @@ type Bitfinex struct {
 	PairsNames []string                                   `json:"pairs_name"`
 	Pairs      map[string]datastructure.BitfinexPair      `json:"pairs_info"`
 	OrderBook  map[string]datastructure.BitfinexOrderBook `json:"orderbook"`
-	MakerFee   float32                                    `json:"maker_fee"`
-	TakerFees  float32                                    `json:"taker_fee"`
+	MakerFee   float64                                    `json:"maker_fee"`
+	TakerFees  float64                                    `json:"taker_fee"`
 	// FeePercent is delegated to save if the fee is in percent or in coin
 	FeePercent bool `json:"fee_percent"`
 }
@@ -41,6 +41,7 @@ type Bitfinex struct {
 func (b *Bitfinex) Init() {
 	b.Pairs = make(map[string]datastructure.BitfinexPair)
 	b.OrderBook = make(map[string]datastructure.BitfinexOrderBook)
+	b.SetFees()
 }
 
 // GetPairsList is delegated to retrieve the type of pairs in the Bitfinex market
@@ -195,7 +196,7 @@ func (b *Bitfinex) GetAllOrderBook() error {
 func (b *Bitfinex) SetFees() {
 	b.MakerFee = 0.1
 	b.TakerFees = 0.2
-	b.FeePercent = false
+	b.FeePercent = true
 }
 
 // GetMarketData is delegated to convert the order book into a standard `market` struct
@@ -224,6 +225,9 @@ func (b *Bitfinex) GetMarketData(pair string) (market.Market, error) {
 		}
 		markets.Asks[pair] = asks
 		markets.Bids[pair] = bids
+		markets.MinVolume, _ = strconv.ParseFloat(b.Pairs[pair].MinOrder, 64)
+		markets.MakerFee = b.MakerFee
+		markets.TakerFee = b.TakerFees
 		return markets, nil
 	}
 	return markets, errors.New("unable to find pair [" + pair + "]")
@@ -236,10 +240,12 @@ func (b *Bitfinex) GetMarketsData() market.Market {
 	var key_standard string
 	markets.Asks = make(map[string][]market.MarketOrder, len(b.OrderBook))
 	markets.Bids = make(map[string][]market.MarketOrder, len(b.OrderBook))
+
 	markets.MarketName = `BITFINEX`
 
 	var order market.MarketOrder
 	for key := range b.OrderBook {
+
 		key_standard = strings.Replace(strings.ToLower(key), "-", "", 1)
 		var asks []market.MarketOrder = make([]market.MarketOrder, len(b.OrderBook[key].Asks))
 		for i, ask := range b.OrderBook[key].Asks {
@@ -257,6 +263,7 @@ func (b *Bitfinex) GetMarketsData() market.Market {
 			order.Volume = volume
 			bids[i] = order
 		}
+		//markets.MinPrice
 		markets.Asks[key_standard] = asks
 		markets.Bids[key_standard] = bids
 	}

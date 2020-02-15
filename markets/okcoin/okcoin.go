@@ -34,8 +34,8 @@ type OkCoin struct {
 	PairsName []string                                 `json:"pairs_name"`
 	Pairs     map[string]datastructure.OkCoinPairs     `json:"pairs"`
 	OrderBook map[string]datastructure.OkCoinOrderBook `json:"orderbook"`
-	MakerFee  float32                                  `json:"maker_fee"`
-	TakerFees float32                                  `json:"taker_fee"`
+	MakerFee  float64                                  `json:"maker_fee"`
+	TakerFees float64                                  `json:"taker_fee"`
 	// FeePercent is delegated to save if the fee is in percent or in coin
 	FeePercent bool `json:"fee_percent"`
 }
@@ -43,8 +43,15 @@ type OkCoin struct {
 func (o *OkCoin) Init() {
 	o.Pairs = make(map[string]datastructure.OkCoinPairs)
 	o.OrderBook = make(map[string]datastructure.OkCoinOrderBook)
+	o.SetFees()
 }
 
+// SetFees is delegated to initialize the fee type/amount for the given market
+func (o *OkCoin) SetFees() {
+	o.MakerFee = 0.1
+	o.TakerFees = 0.2
+	o.FeePercent = true
+}
 func (o *OkCoin) GetMarketData(pair string) (market.Market, error) {
 	var markets market.Market
 	markets.Asks = make(map[string][]market.MarketOrder, len(o.OrderBook))
@@ -105,6 +112,8 @@ func (o *OkCoin) GetMarketsData() market.Market {
 		}
 		markets.Asks[key_standard] = asks
 		markets.Bids[key_standard] = bids
+		markets.MakerFee = o.MakerFee
+		markets.TakerFee = o.TakerFees
 	}
 
 	return markets
@@ -311,8 +320,8 @@ func (ok *OkCoin) GetAllOrderBook() error {
 	return nil
 }
 
-// getBookUrl is delegated to generate the URL for the given pairs
-func getBookUrl(pairs string, size int, depth float64) string {
+// getBookURL is delegated to generate the URL for the given pairs
+func getBookURL(pairs string, size int, depth float64) string {
 	u, err := url.Parse(OKCOIN_PAIRS_DETAILS_URL)
 	if err != nil {
 		zap.S().Warnw("Error creating URL!")
@@ -332,21 +341,14 @@ var allowed_base []string = []string{"EUR", "EURS", "USD", "USDT", "SGD"}
 
 // ParsePair is delegated to convert the given pair into the pair compliant with kraken
 func (o *OkCoin) ParsePair(pair string) string {
-
 	// Expected PAIR-BASE => adausd --> ADA-USD
-
 	if strings.Contains(pair, "-") {
 		return pair
 	}
-
 	// 1 Extract the last 3 char from the string
-
 	lastchars := strings.ToUpper(pair[len(pair)-3:])
-
 	var newpair string
-
 	// 2 Switch case for verify if the coin is in the base allowed
-
 	for i := range allowed_base {
 		if lastchars == allowed_base[i] {
 			// 3 If is a 3char pair, than add a `-` just before the 3 char
@@ -354,9 +356,7 @@ func (o *OkCoin) ParsePair(pair string) string {
 			return newpair
 		}
 	}
-
 	// 4 If not, then take 4 char and add a `-` just before the 4 char
 	newpair = strings.ToUpper(pair[:len(pair)-4] + "-" + pair[len(pair)-4:])
-
 	return newpair
 }

@@ -21,9 +21,13 @@ import (
 )
 
 type Kraken struct {
-	PairsNames []string
-	Pairs      map[string]datastructure.KrakenPair
-	OrderBook  map[string]datastructure.KrakenOrderBook
+	PairsNames []string                                 `json:"pairs_name"`
+	Pairs      map[string]datastructure.KrakenPair      `json:"pairs"`
+	OrderBook  map[string]datastructure.KrakenOrderBook `json:"orderbook"`
+	MakerFee   float64                                  `json:"maker_fee"`
+	TakerFees  float64                                  `json:"taker_fee"`
+	// FeePercent is delegated to save if the fee is in percent or in coin
+	FeePercent bool `json:"fee_percent"`
 }
 
 const KRAKEN_PAIRS_DETAILS_URL string = `https://api.kraken.com/0/public/AssetPairs`
@@ -37,6 +41,14 @@ var KRAKEN_ORDERBOOK_DATA string = path.Join(constants.KRAKEN_PATH, "orders/")
 func (k *Kraken) Init() {
 	k.Pairs = make(map[string]datastructure.KrakenPair)
 	k.OrderBook = make(map[string]datastructure.KrakenOrderBook)
+	k.SetFees()
+}
+
+// SetFees is delegated to initialize the fee type/amount for the given market
+func (k *Kraken) SetFees() {
+	k.MakerFee = 0.16
+	k.TakerFees = 0.26
+	k.FeePercent = true
 }
 
 // GetPairsDetails is delegated to retrieve the pairs detail and the pairs names
@@ -66,21 +78,20 @@ func (k *Kraken) GetPairsDetails() error {
 			i++
 		}
 		return nil
-
-	} else {
-		zap.S().Debugw("Sendind request to [" + KRAKEN_PAIRS_DETAILS_URL + "]")
-		// Call the HTTP method for retrieve the pairs
-		resp := request.SendRequest(KRAKEN_PAIRS_DETAILS_URL, "GET", nil, false)
-		if resp.Error != nil {
-			zap.S().Debugw("Error during http request. Err: " + resp.Error.Error())
-			return resp.Error
-		}
-		if resp.StatusCode != 200 {
-			zap.S().Warnw("Received a non 200 status code: " + strconv.Itoa(resp.StatusCode))
-			return errors.New("NON_200_STATUS_CODE")
-		}
-		data = resp.Body
 	}
+
+	zap.S().Debugw("Sendind request to [" + KRAKEN_PAIRS_DETAILS_URL + "]")
+	// Call the HTTP method for retrieve the pairs
+	resp := request.SendRequest(KRAKEN_PAIRS_DETAILS_URL, "GET", nil, false)
+	if resp.Error != nil {
+		zap.S().Debugw("Error during http request. Err: " + resp.Error.Error())
+		return resp.Error
+	}
+	if resp.StatusCode != 200 {
+		zap.S().Warnw("Received a non 200 status code: " + strconv.Itoa(resp.StatusCode))
+		return errors.New("NON_200_STATUS_CODE")
+	}
+	data = resp.Body
 
 	k.Pairs = loadKrakenPairs(data)
 	if k.Pairs == nil {

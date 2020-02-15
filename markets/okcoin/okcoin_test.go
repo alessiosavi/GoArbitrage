@@ -1,8 +1,9 @@
 package okcoin
 
-import "testing"
-
-import "strings"
+import (
+	"strings"
+	"testing"
+)
 
 func Test_GetBookUrl(t *testing.T) {
 	type testcase struct {
@@ -19,7 +20,7 @@ func Test_GetBookUrl(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		result := getBookUrl(c.pairs, c.size, c.depth)
+		result := getBookURL(c.pairs, c.size, c.depth)
 		if strings.Compare(result, c.expected) != 0 {
 			t.Errorf("Received %v, expected %v [test n. %d]", result, c.expected, c.number)
 		}

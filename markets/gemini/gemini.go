@@ -28,12 +28,11 @@ var GEMINI_PAIRS_DETAILS string = path.Join(constants.GEMINI_PATH, "pairs_info.j
 var GEMINI_ORDERBOOK_DATA string = path.Join(constants.GEMINI_PATH, "orders/")
 
 type Gemini struct {
-	PairsNames []string `json:"pairs_name"`
-	// Pairs      []datastructure.GeminiPairs     `json:"pairs_info"`
-	OrderBook map[string]datastructure.GeminiOrderBook `json:"orderbook"`
-	PairsInfo map[string]datastructure.GeminiPairs     `json:"pairs_info"`
-	MakerFee  float32                                  `json:"maker_fee"`
-	TakerFees float32                                  `json:"taker_fee"`
+	PairsNames []string                                 `json:"pairs_name"`
+	OrderBook  map[string]datastructure.GeminiOrderBook `json:"orderbook"`
+	PairsInfo  map[string]datastructure.GeminiPairs     `json:"pairs_info"`
+	MakerFee   float64                                  `json:"maker_fee"`
+	TakerFees  float64                                  `json:"taker_fee"`
 	// FeePercent is delegated to save if the fee is in percent or in coin
 	FeePercent bool `json:"fee_percent"`
 }
@@ -41,6 +40,14 @@ type Gemini struct {
 func (g *Gemini) Init() {
 	g.OrderBook = make(map[string]datastructure.GeminiOrderBook)
 	g.PairsInfo = make(map[string]datastructure.GeminiPairs)
+	g.SetFees()
+}
+
+// SetFees is delegated to initialize the fee type/amount for the given market
+func (g *Gemini) SetFees() {
+	g.MakerFee = 0.1
+	g.TakerFees = 0.35
+	g.FeePercent = true
 }
 
 // GetPairsList is delegated to retrieve the type of pairs in the Gemini market
@@ -209,6 +216,8 @@ func (g *Gemini) GetMarketData(pair string) (market.Market, error) {
 		}
 		markets.Asks[pair] = asks
 		markets.Bids[pair] = bids
+		markets.MakerFee = g.MakerFee
+		markets.TakerFee = g.TakerFees
 		return markets, nil
 	}
 	return markets, errors.New("unable to find pair [" + pair + "]")

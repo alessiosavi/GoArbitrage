@@ -127,28 +127,51 @@ func Arbitrage(pair string, markets []market.Market) {
 		pair1 = parsePair(pair, markets[i])
 		pair2 = parsePair(pair, maxSell)
 		pair3 = parsePair(pair, minBuy)
-		log.Println("Checking markets [" + markets[i].MarketName + "] against [" + minBuy.MarketName + "] with pair: [" + pair1 + "] for BUY")
+		zap.S().Debug("Checking markets [" + markets[i].MarketName + "] against [" + minBuy.MarketName + "] with pair: [" + pair1 + "] for BUY")
 		//log.Println("Markets [", i, "] Asks:", markets[i].Asks[pair])
 		log.Printf("Pair %s  %s  %s \n", pair1, pair2, pair3)
 		if len(markets[i].Bids[pair1]) > 0 && len(minBuy.Bids[pair3]) > 0 && len(markets[i].Asks[pair1]) > 0 && len(maxSell.Asks[pair2]) > 0 {
 			if markets[i].Bids[pair1][0].Price < minBuy.Bids[pair3][0].Price && markets[i].MarketName != maxSell.MarketName {
-				log.Println("Market [" + markets[i].MarketName + "] have a LESSER price than [" + minBuy.MarketName + "] FOR BUY")
+				zap.S().Debug("Market [" + markets[i].MarketName + "] have a LESSER price than [" + minBuy.MarketName + "] FOR BUY")
 				minBuy = markets[i]
+				minBuy.MinVolume = minBuy.Bids[pair1][0].Volume
+				minBuy.MakerFee = markets[i].MakerFee
+				minBuy.TakerFee = markets[i].TakerFee
 			}
 			log.Println("Checking markets [" + markets[i].MarketName + "] against [" + maxSell.MarketName + "] with pair: [" + pair2 + "] for BUY")
 			if markets[i].Asks[pair1][0].Price > maxSell.Asks[pair2][0].Price && markets[i].MarketName != maxSell.MarketName {
-				log.Println("Market [" + markets[i].MarketName + "] have a GREATER price than [" + maxSell.MarketName + "] FOR SELL")
+				zap.S().Debug("Market [" + markets[i].MarketName + "] have a GREATER price than [" + maxSell.MarketName + "] FOR SELL")
 				maxSell = markets[i]
+				maxSell.MinVolume = maxSell.Asks[pair1][0].Volume
+				maxSell.MakerFee = markets[i].MakerFee
+				maxSell.TakerFee = markets[i].TakerFee
 			}
 			if minBuy.MarketName != maxSell.MarketName {
 				pair2 = parsePair(pair, maxSell)
 				pair3 = parsePair(pair, minBuy)
-				log.Println("Arbitrage opportunity for pair: [" + pair + "]")
-				log.Println("Buy Market:", minBuy.MarketName, "Price:", minBuy.Bids[pair3][0].Price, " Volume: ", minBuy.Bids[pair3][0].Volume)
-				log.Println("Sell Market:", maxSell.MarketName, "Price:", maxSell.Asks[pair2][0].Price, " Volume: ", maxSell.Asks[pair2][0].Volume)
+				volume := getMin(maxSell.Asks[pair2][0].Volume, minBuy.Bids[pair3][0].Volume)
+				buyTotal := volume * minBuy.Bids[pair3][0].Price
+				buyTotal += percent(buyTotal, minBuy.TakerFee)
+				sellTotal := volume * maxSell.Asks[pair2][0].Price
+				sellTotal += percent(sellTotal, maxSell.TakerFee)
+				zap.S().Infof("Arbitrage opportunity for pair [%s] with volume: %f\n", pair, volume)
+				zap.S().Infof("Buy: %f Sell: %f | Difference: %f\n", buyTotal, sellTotal, sellTotal-buyTotal)
+				zap.S().Infof("Buy Market: %s Price: %f Volume: %f\n", minBuy.MarketName, minBuy.Bids[pair3][0].Price, volume)
+				zap.S().Infof("Sell Market: %s Price: %f Volume: %f\n", maxSell.MarketName, maxSell.Asks[pair2][0].Price, volume)
 			}
 		}
 	}
+}
+
+func percent(percent float64, all float64) float64 {
+	return (all * percent) / float64(100)
+}
+
+func getMin(a, b float64) float64 {
+	if a < b {
+		return a
+	}
+	return b
 }
 
 // parsePair is delegated to modify the standard lowercase pair into the related pair for the given market
