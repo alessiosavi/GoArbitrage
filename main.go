@@ -17,7 +17,8 @@ import (
 )
 
 func main() {
-	loggerMgr := initZapLog(zap.InfoLevel)
+
+	loggerMgr := initZapLog(zap.DebugLevel)
 	zap.ReplaceGlobals(loggerMgr)
 	defer loggerMgr.Sync() // flushes buffer, if any
 	logger := loggerMgr.Sugar()
@@ -67,12 +68,12 @@ func main() {
 	markets = append(markets, okcoin.GetMarketsData())
 
 	pairs := engine.GetCommonCoin(markets...)
-	//	log.Println("Pairs in common: ", pairs)
 	zap.S().Infof("Common pairs: %v", pairs)
-	for _, pair := range pairs {
-		engine.Arbitrage(pair, markets)
+	for {
+		for _, pair := range pairs {
+			engine.Arbitrage(pair, markets)
+		}
 	}
-
 }
 
 func initZapLog(logLevel zapcore.Level) *zap.Logger {
@@ -80,7 +81,6 @@ func initZapLog(logLevel zapcore.Level) *zap.Logger {
 	config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 	config.EncoderConfig.TimeKey = "timestamp"
 	config.EncoderConfig.EncodeTime = zapcore.RFC3339NanoTimeEncoder
-	//zapcore.ISO8601TimeEncoder
 	logger, _ := config.Build()
 	config.Level.SetLevel(logLevel)
 	return logger

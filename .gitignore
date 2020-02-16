@@ -5,3 +5,6 @@ data/OKCOIN/
 GoArbitrage
 log
 .idea/
+nohup.out
+data.log
+data.tar.xz
