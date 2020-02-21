@@ -1,0 +1,11 @@
+{
+ "pair": "ethbtc",
+ "bids": [],
+ "asks": [
+  {
+   "price": "13000",
+   "amount": "88.83",
+   "timestamp": "1581765514"
+  }
+ ]
+}

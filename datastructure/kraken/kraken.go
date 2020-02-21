@@ -35,6 +35,18 @@ type Response struct {
 	Result map[string]KrakenOrderBook `json:"result"`
 }
 
+type Tickers struct {
+	Error  []interface{}     `json:"error"`
+	Result map[string]Ticker `json:"result"`
+}
+
+type Ticker struct {
+	Aclass          string `json:"aclass"`
+	Altname         string `json:"altname"`
+	Decimals        int    `json:"decimals"`
+	DisplayDecimals int    `json:"display_decimals"`
+}
+
 // UnmarshalJSON decode a BifinexOrder.
 func (b *KrakenOrder) UnmarshalJSON(data []byte) error {
 	var packedData []json.Number

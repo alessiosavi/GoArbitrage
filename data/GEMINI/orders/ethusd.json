@@ -1,0 +1,17 @@
+{
+ "pair": "ethusd",
+ "bids": [
+  {
+   "price": "202.50",
+   "amount": "0.001",
+   "timestamp": "1581765515"
+  }
+ ],
+ "asks": [
+  {
+   "price": "270.00",
+   "amount": "0.001",
+   "timestamp": "1581765515"
+  }
+ ]
+}

@@ -3,8 +3,20 @@ package okcoin
 import (
 	"strings"
 	"testing"
+
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
+func initZapLog(logLevel zapcore.Level) *zap.Logger {
+	config := zap.NewDevelopmentConfig()
+	config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+	config.EncoderConfig.TimeKey = "timestamp"
+	config.EncoderConfig.EncodeTime = zapcore.RFC3339NanoTimeEncoder
+	logger, _ := config.Build()
+	config.Level.SetLevel(logLevel)
+	return logger
+}
 func Test_GetBookUrl(t *testing.T) {
 	type testcase struct {
 		pairs    string
@@ -25,4 +37,27 @@ func Test_GetBookUrl(t *testing.T) {
 			t.Errorf("Received %v, expected %v [test n. %d]", result, c.expected, c.number)
 		}
 	}
+}
+
+func Test_GetPairsList(t *testing.T) {
+	loggerMgr := initZapLog(zap.DebugLevel)
+	zap.ReplaceGlobals(loggerMgr)
+	defer loggerMgr.Sync() // flushes buffer, if any
+	var o OkCoin
+	err := o.GetPairsList()
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(o.PairsName)
+}
+
+func Test_RetrieveTickers(t *testing.T) {
+	loggerMgr := initZapLog(zap.DebugLevel)
+	zap.ReplaceGlobals(loggerMgr)
+	defer loggerMgr.Sync() // flushes buffer, if any
+	var o OkCoin
+	if err := o.GetPairsList(); err != nil {
+		t.Error(err)
+	}
+	t.Log(o.GetTickers())
 }

@@ -1,0 +1,15 @@
+{
+ "pair": "tknusd",
+ "bids": [
+  {
+   "price": "0.0152",
+   "amount": "10"
+  }
+ ],
+ "asks": [
+  {
+   "price": "0.34",
+   "amount": "49.99"
+  }
+ ]
+}

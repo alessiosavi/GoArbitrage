@@ -68,6 +68,7 @@ func main() {
 	markets = append(markets, okcoin.GetMarketsData())
 
 	pairs := engine.GetCommonCoin(markets...)
+	markets = market.InitDummyWalletForPairs(markets, pairs)
 	zap.S().Infof("Common pairs: %v", pairs)
 	for {
 		for _, pair := range pairs {

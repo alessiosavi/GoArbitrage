@@ -1,0 +1,17 @@
+{
+ "pair": "ltcusd",
+ "bids": [
+  {
+   "price": "58.99",
+   "amount": "0.0035",
+   "timestamp": "1581765518"
+  }
+ ],
+ "asks": [
+  {
+   "price": "81.50",
+   "amount": "67.9486215",
+   "timestamp": "1581765518"
+  }
+ ]
+}

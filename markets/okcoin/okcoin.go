@@ -37,7 +37,8 @@ type OkCoin struct {
 	MakerFee  float64                                  `json:"maker_fee"`
 	TakerFees float64                                  `json:"taker_fee"`
 	// FeePercent is delegated to save if the fee is in percent or in coin
-	FeePercent bool `json:"fee_percent"`
+	FeePercent bool     `json:"fee_percent"`
+	Tickers    []string `json:"tickers"`
 }
 
 func (o *OkCoin) Init() {
@@ -52,11 +53,31 @@ func (o *OkCoin) SetFees() {
 	o.TakerFees = 0.2
 	o.FeePercent = true
 }
+
+// GetTickers is delegated to retrieve the list of tickers tradable in the exchange
+func (o *OkCoin) GetTickers() error {
+	if len(o.PairsName) > 0 {
+		var tickers []string = make([]string, len(o.PairsName))
+		for i := range o.PairsName {
+			tickers[i] = strings.Split(o.PairsName[i], "-")[0]
+		}
+		o.Tickers = tickers
+		return nil
+	}
+	return errors.New("OkCoin pairs name not initialized")
+}
+
+// GetMarketData is delegated to convert the order book into a standard `market` struct
 func (o *OkCoin) GetMarketData(pair string) (market.Market, error) {
 	var markets market.Market
 	markets.Asks = make(map[string][]market.MarketOrder, len(o.OrderBook))
 	markets.Bids = make(map[string][]market.MarketOrder, len(o.OrderBook))
 	markets.MarketName = `OKCOIN`
+	var minVolume float64
+	if min, ok := o.Pairs[pair]; ok {
+		m, _ := strconv.ParseFloat(min.MinSize, 64)
+		minVolume = m
+	}
 	var order market.MarketOrder
 	if orders, ok := o.OrderBook[pair]; ok {
 		var asks []market.MarketOrder = make([]market.MarketOrder, len(orders.Asks))
@@ -65,6 +86,7 @@ func (o *OkCoin) GetMarketData(pair string) (market.Market, error) {
 			volume, _ := strconv.ParseFloat(ask[1], 64)
 			order.Price = price
 			order.Volume = volume
+			order.MinVolume = minVolume
 			asks[i] = order
 		}
 		var bids []market.MarketOrder = make([]market.MarketOrder, len(orders.Bids))
@@ -73,6 +95,7 @@ func (o *OkCoin) GetMarketData(pair string) (market.Market, error) {
 			volume, _ := strconv.ParseFloat(bid[1], 64)
 			order.Price = price
 			order.Volume = volume
+			order.MinVolume = minVolume
 			bids[i] = order
 		}
 		markets.Asks[pair] = asks
@@ -120,7 +143,7 @@ func (o *OkCoin) GetMarketsData() market.Market {
 }
 
 // GetPairsList is delegated to retrieve the type of pairs in the Bitfinex market
-func (ok *OkCoin) GetPairsList() error {
+func (o *OkCoin) GetPairsList() error {
 	var request req.Request
 	var data []byte
 	var err error
@@ -135,7 +158,7 @@ func (ok *OkCoin) GetPairsList() error {
 			return err
 		}
 
-		err = json.Unmarshal(data, &ok.PairsName)
+		err = json.Unmarshal(data, &o.PairsName)
 
 		if err != nil {
 			zap.S().Warnw("Error during unmarshal! Err: " + err.Error())
@@ -143,37 +166,37 @@ func (ok *OkCoin) GetPairsList() error {
 		}
 		return nil
 
-	} else {
-		zap.S().Debugw("Sendind request to [" + OKCOIN_PAIRS_URL + "]")
-		// Call the HTTP method for retrieve the pairs
-		resp := request.SendRequest(OKCOIN_PAIRS_URL, "GET", nil, false)
-		if resp.Error != nil {
-			zap.S().Warnw("Error during http request. Err: " + resp.Error.Error())
-			return resp.Error
-		}
-		if resp.StatusCode != 200 {
-			zap.S().Warnw("Received a non 200 status code: " + strconv.Itoa(resp.StatusCode))
-			return errors.New("NON_200_STATUS_CODE")
-		}
-		data = resp.Body
 	}
+	zap.S().Debugw("Sendind request to [" + OKCOIN_PAIRS_URL + "]")
+	// Call the HTTP method for retrieve the pairs
+	resp := request.SendRequest(OKCOIN_PAIRS_URL, "GET", nil, nil, false, constants.TIMEOUT_REQ*time.Second)
+	if resp.Error != nil {
+		zap.S().Warnw("Error during http request. Err: " + resp.Error.Error())
+		return resp.Error
+	}
+	if resp.StatusCode != 200 {
+		zap.S().Warnw("Received a non 200 status code: " + strconv.Itoa(resp.StatusCode))
+		return errors.New("NON_200_STATUS_CODE")
+	}
+	data = resp.Body
+
 	err = json.Unmarshal(data, &pairs_raw)
 
 	if err != nil {
 		zap.S().Warnw("Error during unmarshal! Err: " + err.Error())
 		return err
 	}
-	ok.PairsName = make([]string, len(pairs_raw))
+	o.PairsName = make([]string, len(pairs_raw))
 	for i := range pairs_raw {
-		ok.PairsName[i] = pairs_raw[i].ProductID
+		o.PairsName[i] = pairs_raw[i].ProductID
 	}
 	// Update the file with the new data
-	utils.DumpStruct(ok.PairsName, OKCOIN_PAIRS_DATA)
+	utils.DumpStruct(o.PairsName, OKCOIN_PAIRS_DATA)
 	return nil
 }
 
 // GetPairsDetails is delegated to retrieve the information related to the pairs
-func (ok *OkCoin) GetPairsDetails() error {
+func (o *OkCoin) GetPairsDetails() error {
 	var request req.Request
 	var pairsInfo []datastructure.OkCoinPairs
 	var data []byte
@@ -190,7 +213,7 @@ func (ok *OkCoin) GetPairsDetails() error {
 	} else {
 		zap.S().Debugw("Sendind request to [" + OKCOIN_PAIRS_DETAILS_URL + "]")
 		// Call the HTTP method for retrieve the pairs
-		resp := request.SendRequest(OKCOIN_PAIRS_DETAILS_URL, "GET", nil, false)
+		resp := request.SendRequest(OKCOIN_PAIRS_DETAILS_URL, "GET", nil, nil, false, constants.TIMEOUT_REQ*time.Second)
 		if resp.Error != nil {
 			zap.S().Debugw("Error during http request. Err: " + resp.Error.Error())
 			return resp.Error
@@ -209,11 +232,11 @@ func (ok *OkCoin) GetPairsDetails() error {
 		return err
 	}
 
-	ok.Pairs = make(map[string]datastructure.OkCoinPairs, len(pairsInfo))
+	o.Pairs = make(map[string]datastructure.OkCoinPairs, len(pairsInfo))
 
 	for i := range pairsInfo {
 		pairsInfo[i].Pair = pairsInfo[i].BaseCurrency + "-" + pairsInfo[i].QuoteCurrency
-		ok.Pairs[pairsInfo[i].Pair] = pairsInfo[i]
+		o.Pairs[pairsInfo[i].Pair] = pairsInfo[i]
 	}
 
 	// Update the file with the new data
@@ -221,7 +244,7 @@ func (ok *OkCoin) GetPairsDetails() error {
 	return nil
 }
 
-func (ok *OkCoin) GetOrderBook(pair string) error {
+func (o *OkCoin) GetOrderBook(pair string) error {
 	var request req.Request
 	var order datastructure.OkCoinOrderBook
 	var data []byte
@@ -230,7 +253,7 @@ func (ok *OkCoin) GetOrderBook(pair string) error {
 	url := OKCOIN_PAIRS_DETAILS_URL + pair + "/book?size=1"
 	zap.S().Debug("Sendind request to [" + url + "]")
 	// Call the HTTP method for retrieve the pairs
-	resp := request.SendRequest(url, "GET", nil, false)
+	resp := request.SendRequest(url, "GET", nil, nil, false, constants.TIMEOUT_REQ*time.Second)
 	if resp.Error != nil {
 		zap.S().Debug("Error during http request. Err: " + resp.Error.Error())
 		return resp.Error
@@ -249,23 +272,23 @@ func (ok *OkCoin) GetOrderBook(pair string) error {
 		return err
 	}
 
-	if len(ok.OrderBook) == 0 {
-		ok.OrderBook = make(map[string]datastructure.OkCoinOrderBook)
+	if len(o.OrderBook) == 0 {
+		o.OrderBook = make(map[string]datastructure.OkCoinOrderBook)
 	}
-	ok.OrderBook[pair] = order
+	o.OrderBook[pair] = order
 
 	// Update the file with the new data
 	//utils.DumpStruct(order, path.Join(OKCOIN_ORDERBOOK_DATA, pair+".json"))
 	return nil
 }
 
-func (ok *OkCoin) GetAllOrderBook() error {
+func (o *OkCoin) GetAllOrderBook() error {
 	var request req.Request
-	var orders map[string]datastructure.OkCoinOrderBook = make(map[string]datastructure.OkCoinOrderBook, len(ok.PairsName))
+	var orders map[string]datastructure.OkCoinOrderBook = make(map[string]datastructure.OkCoinOrderBook, len(o.PairsName))
 	var data []byte
 	var err error
 
-	for _, pair := range ok.PairsName {
+	for _, pair := range o.PairsName {
 		zap.S().Debugw("Managin pair: [" + pair + "]")
 		if strings.Contains(pair, ":") {
 			zap.S().Warnw("[" + pair + "] is not a tradable pair")
@@ -287,7 +310,7 @@ func (ok *OkCoin) GetAllOrderBook() error {
 			url := OKCOIN_PAIRS_DETAILS_URL + pair + "/book?size=1"
 			zap.S().Debugw("Sendind request to [" + url + "]")
 			// Call the HTTP method for retrieve the pairs
-			resp := request.SendRequest(url, "GET", nil, false)
+			resp := request.SendRequest(url, "GET", nil, nil, false, constants.TIMEOUT_REQ*time.Second)
 			if resp.Error != nil {
 				zap.S().Debugw("Error during http request. Err: " + resp.Error.Error())
 				continue
@@ -312,10 +335,10 @@ func (ok *OkCoin) GetAllOrderBook() error {
 		}
 	}
 
-	ok.OrderBook = orders
+	o.OrderBook = orders
 
 	// Update the file with the new data
-	utils.DumpStruct(ok.OrderBook, path.Join(constants.OKCOIN_PATH, "orders_all.json"))
+	utils.DumpStruct(o.OrderBook, path.Join(constants.OKCOIN_PATH, "orders_all.json"))
 
 	return nil
 }

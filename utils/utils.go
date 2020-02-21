@@ -2,11 +2,13 @@ package utils
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"strconv"
 	"strings"
 
 	fileutils "github.com/alessiosavi/GoGPUtils/files"
+	"github.com/go-redis/redis/v7"
 	"go.uber.org/zap"
 )
 
@@ -39,4 +41,18 @@ func LoadMinAmountKraken(filepath string) map[string]float64 {
 	}
 	zap.S().Infof("Min amount for kraken: %v", amounts)
 	return amounts
+}
+
+// InitClient initialize a new dummy RedisClient
+func InitClient() *redis.Client {
+	client := redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: "", // no password set
+		DB:       0,  // use default DB
+	})
+
+	pong, err := client.Ping().Result()
+	fmt.Println(pong, err)
+	// Output: PONG <nil>
+	return client
 }

@@ -1,0 +1,15 @@
+{
+ "pair": "paxust",
+ "bids": [
+  {
+   "price": "0.90092",
+   "amount": "375"
+  }
+ ],
+ "asks": [
+  {
+   "price": "1.0333",
+   "amount": "449"
+  }
+ ]
+}

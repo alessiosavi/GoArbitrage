@@ -1,0 +1,194 @@
+[
+ {
+  "pair": "BTC-USD",
+  "base_currency": "BTC",
+  "min_size": "0.001",
+  "quote_currency": "USD",
+  "size_increment": "0.0001",
+  "tick_size": "0.01"
+ },
+ {
+  "pair": "LTC-USD",
+  "base_currency": "LTC",
+  "min_size": "0.1",
+  "quote_currency": "USD",
+  "size_increment": "0.0001",
+  "tick_size": "0.01"
+ },
+ {
+  "pair": "ETH-USD",
+  "base_currency": "ETH",
+  "min_size": "0.01",
+  "quote_currency": "USD",
+  "size_increment": "0.0001",
+  "tick_size": "0.01"
+ },
+ {
+  "pair": "ETC-USD",
+  "base_currency": "ETC",
+  "min_size": "0.1",
+  "quote_currency": "USD",
+  "size_increment": "0.0001",
+  "tick_size": "0.001"
+ },
+ {
+  "pair": "TUSD-USD",
+  "base_currency": "TUSD",
+  "min_size": "0.01",
+  "quote_currency": "USD",
+  "size_increment": "0.0001",
+  "tick_size": "0.0001"
+ },
+ {
+  "pair": "BCH-USD",
+  "base_currency": "BCH",
+  "min_size": "0.01",
+  "quote_currency": "USD",
+  "size_increment": "0.0001",
+  "tick_size": "0.01"
+ },
+ {
+  "pair": "EOS-USD",
+  "base_currency": "EOS",
+  "min_size": "0.1",
+  "quote_currency": "USD",
+  "size_increment": "0.0001",
+  "tick_size": "0.001"
+ },
+ {
+  "pair": "XRP-USD",
+  "base_currency": "XRP",
+  "min_size": "1",
+  "quote_currency": "USD",
+  "size_increment": "0.001",
+  "tick_size": "0.0001"
+ },
+ {
+  "pair": "TRX-USD",
+  "base_currency": "TRX",
+  "min_size": "1",
+  "quote_currency": "USD",
+  "size_increment": "0.0001",
+  "tick_size": "0.00001"
+ },
+ {
+  "pair": "BSV-USD",
+  "base_currency": "BSV",
+  "min_size": "0.01",
+  "quote_currency": "USD",
+  "size_increment": "0.0001",
+  "tick_size": "0.01"
+ },
+ {
+  "pair": "USDT-USD",
+  "base_currency": "USDT",
+  "min_size": "1",
+  "quote_currency": "USD",
+  "size_increment": "0.0001",
+  "tick_size": "0.0001"
+ },
+ {
+  "pair": "USDK-USD",
+  "base_currency": "USDK",
+  "min_size": "0.01",
+  "quote_currency": "USD",
+  "size_increment": "0.0001",
+  "tick_size": "0.0001"
+ },
+ {
+  "pair": "EURS-USD",
+  "base_currency": "EURS",
+  "min_size": "0.01",
+  "quote_currency": "USD",
+  "size_increment": "0.0001",
+  "tick_size": "0.0001"
+ },
+ {
+  "pair": "HBAR-USD",
+  "base_currency": "HBAR",
+  "min_size": "1",
+  "quote_currency": "USD",
+  "size_increment": "0.0001",
+  "tick_size": "0.0001"
+ },
+ {
+  "pair": "PAX-USD",
+  "base_currency": "PAX",
+  "min_size": "0.1",
+  "quote_currency": "USD",
+  "size_increment": "0.0001",
+  "tick_size": "0.0001"
+ },
+ {
+  "pair": "USDC-USD",
+  "base_currency": "USDC",
+  "min_size": "0.1",
+  "quote_currency": "USD",
+  "size_increment": "0.0001",
+  "tick_size": "0.0001"
+ },
+ {
+  "pair": "BTC-USDT",
+  "base_currency": "BTC",
+  "min_size": "0.001",
+  "quote_currency": "USDT",
+  "size_increment": "0.0001",
+  "tick_size": "0.1"
+ },
+ {
+  "pair": "BTC-SGD",
+  "base_currency": "BTC",
+  "min_size": "0.001",
+  "quote_currency": "SGD",
+  "size_increment": "0.0001",
+  "tick_size": "0.01"
+ },
+ {
+  "pair": "ETH-SGD",
+  "base_currency": "ETH",
+  "min_size": "0.01",
+  "quote_currency": "SGD",
+  "size_increment": "0.0001",
+  "tick_size": "0.01"
+ },
+ {
+  "pair": "BTC-EUR",
+  "base_currency": "BTC",
+  "min_size": "0.001",
+  "quote_currency": "EUR",
+  "size_increment": "0.0001",
+  "tick_size": "0.01"
+ },
+ {
+  "pair": "BTC-EURS",
+  "base_currency": "BTC",
+  "min_size": "0.001",
+  "quote_currency": "EURS",
+  "size_increment": "0.0001",
+  "tick_size": "0.01"
+ },
+ {
+  "pair": "ETH-EUR",
+  "base_currency": "ETH",
+  "min_size": "0.01",
+  "quote_currency": "EUR",
+  "size_increment": "0.0001",
+  "tick_size": "0.01"
+ },
+ {
+  "pair": "BCH-EUR",
+  "base_currency": "BCH",
+  "min_size": "0.01",
+  "quote_currency": "EUR",
+  "size_increment": "0.0001",
+  "tick_size": "0.01"
+ },
+ {
+  "pair": "EURS-EUR",
+  "base_currency": "EURS",
+  "min_size": "0.01",
+  "quote_currency": "EUR",
+  "size_increment": "0.0001",
+  "tick_size": "0.0001"
+ }
+]

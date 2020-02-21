@@ -1,0 +1,92 @@
+{
+ "bchbtc": {
+  "symbol": "bchbtc",
+  "min_order": 0.001,
+  "min_order_increment": 0.000001,
+  "min_price_increment": 0.00001
+ },
+ "bcheth": {
+  "symbol": "bcheth",
+  "min_order": 0.001,
+  "min_order_increment": 0.000001,
+  "min_price_increment": 0.0001
+ },
+ "bchusd": {
+  "symbol": "bchusd",
+  "min_order": 0.001,
+  "min_order_increment": 0.000001,
+  "min_price_increment": 0.01
+ },
+ "btcusd": {
+  "symbol": "btcusd",
+  "min_order": 0.00001,
+  "min_order_increment": 1e-8,
+  "min_price_increment": 0.01
+ },
+ "ethbtc": {
+  "symbol": "ethbtc",
+  "min_order": 0.001,
+  "min_order_increment": 0.000001,
+  "min_price_increment": 0.00001
+ },
+ "ethusd": {
+  "symbol": "ethusd",
+  "min_order": 0.001,
+  "min_order_increment": 0.000001,
+  "min_price_increment": 0.01
+ },
+ "ltcbch": {
+  "symbol": "ltcbch",
+  "min_order": 0.01,
+  "min_order_increment": 0.00001,
+  "min_price_increment": 0.0001
+ },
+ "ltcbtc": {
+  "symbol": "ltcbtc",
+  "min_order": 0.01,
+  "min_order_increment": 0.00001,
+  "min_price_increment": 0.00001
+ },
+ "ltceth": {
+  "symbol": "ltceth",
+  "min_order": 0.01,
+  "min_order_increment": 0.00001,
+  "min_price_increment": 0.0001
+ },
+ "ltcusd": {
+  "symbol": "ltcusd",
+  "min_order": 0.01,
+  "min_order_increment": 0.00001,
+  "min_price_increment": 0.01
+ },
+ "zecbch": {
+  "symbol": "zecbch",
+  "min_order": 0.001,
+  "min_order_increment": 0.000001,
+  "min_price_increment": 0.0001
+ },
+ "zecbtc": {
+  "symbol": "zecbtc",
+  "min_order": 0.001,
+  "min_order_increment": 0.000001,
+  "min_price_increment": 0.00001
+ },
+ "zeceth": {
+  "symbol": "zeceth",
+  "min_order": 0.001,
+  "min_order_increment": 0.000001,
+  "min_price_increment": 0.0001
+ },
+ "zecltc": {
+  "symbol": "zecltc",
+  "min_order": 0.001,
+  "min_order_increment": 0.000001,
+  "min_price_increment": 0.001
+ },
+ "zecusd": {
+  "symbol": "zecusd",
+  "min_order": 0.001,
+  "min_order_increment": 0.000001,
+  "min_price_increment": 0.01
+ }
+}

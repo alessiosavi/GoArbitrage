@@ -1,0 +1,15 @@
+{
+ "pair": "rcnusd",
+ "bids": [
+  {
+   "price": "0.061",
+   "amount": "200"
+  }
+ ],
+ "asks": [
+  {
+   "price": "0.08825",
+   "amount": "168"
+  }
+ ]
+}

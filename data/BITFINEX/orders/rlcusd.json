@@ -1,0 +1,15 @@
+{
+ "pair": "rlcusd",
+ "bids": [
+  {
+   "price": "0.63064",
+   "amount": "333"
+  }
+ ],
+ "asks": [
+  {
+   "price": "0.83",
+   "amount": "20"
+  }
+ ]
+}

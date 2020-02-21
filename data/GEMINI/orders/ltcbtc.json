@@ -1,0 +1,17 @@
+{
+ "pair": "ltcbtc",
+ "bids": [
+  {
+   "price": "0.00835",
+   "amount": "11540.87639",
+   "timestamp": "1581765518"
+  }
+ ],
+ "asks": [
+  {
+   "price": "1",
+   "amount": "20414.59",
+   "timestamp": "1581765518"
+  }
+ ]
+}

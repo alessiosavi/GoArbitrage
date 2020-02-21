@@ -1,0 +1,15 @@
+{
+ "pair": "okbusd",
+ "bids": [
+  {
+   "price": "0.85",
+   "amount": "30"
+  }
+ ],
+ "asks": [
+  {
+   "price": "69",
+   "amount": "2"
+  }
+ ]
+}

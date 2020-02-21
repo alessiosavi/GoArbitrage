@@ -1,0 +1,11 @@
+{
+ "pair": "bchusd",
+ "bids": [
+  {
+   "price": "269.00",
+   "amount": "1",
+   "timestamp": "1581765516"
+  }
+ ],
+ "asks": []
+}

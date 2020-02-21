@@ -1,0 +1,185 @@
+{
+ "bchbtc": {
+  "pair": "bchbtc",
+  "bids": [
+   {
+    "price": "0.0001",
+    "amount": "1",
+    "timestamp": "1581765516"
+   }
+  ],
+  "asks": [
+   {
+    "price": "0.028",
+    "amount": "6888.20358",
+    "timestamp": "1581765516"
+   }
+  ]
+ },
+ "bcheth": {
+  "pair": "bcheth",
+  "bids": [
+   {
+    "price": "3633",
+    "amount": "15",
+    "timestamp": "1581765517"
+   }
+  ],
+  "asks": []
+ },
+ "bchusd": {
+  "pair": "bchusd",
+  "bids": [
+   {
+    "price": "269.00",
+    "amount": "1",
+    "timestamp": "1581765516"
+   }
+  ],
+  "asks": []
+ },
+ "btcusd": {
+  "pair": "btcusd",
+  "bids": [
+   {
+    "price": "10232.08",
+    "amount": "0.024862",
+    "timestamp": "1581765514"
+   }
+  ],
+  "asks": [
+   {
+    "price": "10232.09",
+    "amount": "7.9814654",
+    "timestamp": "1581765514"
+   }
+  ]
+ },
+ "ethbtc": {
+  "pair": "ethbtc",
+  "bids": [],
+  "asks": [
+   {
+    "price": "13000",
+    "amount": "88.83",
+    "timestamp": "1581765514"
+   }
+  ]
+ },
+ "ethusd": {
+  "pair": "ethusd",
+  "bids": [
+   {
+    "price": "202.50",
+    "amount": "0.001",
+    "timestamp": "1581765515"
+   }
+  ],
+  "asks": [
+   {
+    "price": "270.00",
+    "amount": "0.001",
+    "timestamp": "1581765515"
+   }
+  ]
+ },
+ "ltcbch": {
+  "pair": "ltcbch",
+  "bids": [
+   {
+    "price": "3633",
+    "amount": "5",
+    "timestamp": "1581765520"
+   }
+  ],
+  "asks": []
+ },
+ "ltcbtc": {
+  "pair": "ltcbtc",
+  "bids": [
+   {
+    "price": "0.00835",
+    "amount": "11540.87639",
+    "timestamp": "1581765518"
+   }
+  ],
+  "asks": [
+   {
+    "price": "1",
+    "amount": "20414.59",
+    "timestamp": "1581765518"
+   }
+  ]
+ },
+ "ltceth": {
+  "pair": "ltceth",
+  "bids": [],
+  "asks": []
+ },
+ "ltcusd": {
+  "pair": "ltcusd",
+  "bids": [
+   {
+    "price": "58.99",
+    "amount": "0.0035",
+    "timestamp": "1581765518"
+   }
+  ],
+  "asks": [
+   {
+    "price": "81.50",
+    "amount": "67.9486215",
+    "timestamp": "1581765518"
+   }
+  ]
+ },
+ "zecbch": {
+  "pair": "zecbch",
+  "bids": [
+   {
+    "price": "900",
+    "amount": "5",
+    "timestamp": "1581765522"
+   }
+  ],
+  "asks": []
+ },
+ "zecbtc": {
+  "pair": "zecbtc",
+  "bids": [],
+  "asks": []
+ },
+ "zeceth": {
+  "pair": "zeceth",
+  "bids": [
+   {
+    "price": "0.3489",
+    "amount": "9501.6881",
+    "timestamp": "1581765521"
+   }
+  ],
+  "asks": []
+ },
+ "zecltc": {
+  "pair": "zecltc",
+  "bids": [
+   {
+    "price": "3633",
+    "amount": "15",
+    "timestamp": "1581765523"
+   }
+  ],
+  "asks": []
+ },
+ "zecusd": {
+  "pair": "zecusd",
+  "bids": [
+   {
+    "price": "5.00",
+    "amount": "88",
+    "timestamp": "1581765520"
+   }
+  ],
+  "asks": []
+ }
+}

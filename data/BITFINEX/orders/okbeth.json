@@ -1,0 +1,15 @@
+{
+ "pair": "okbeth",
+ "bids": [
+  {
+   "price": "0.001",
+   "amount": "100"
+  }
+ ],
+ "asks": [
+  {
+   "price": "0.042333",
+   "amount": "30"
+  }
+ ]
+}

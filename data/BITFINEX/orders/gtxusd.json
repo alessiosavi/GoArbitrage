@@ -1,0 +1,15 @@
+{
+ "pair": "gtxusd",
+ "bids": [
+  {
+   "price": "0.2",
+   "amount": "10000"
+  }
+ ],
+ "asks": [
+  {
+   "price": "1",
+   "amount": "5000"
+  }
+ ]
+}

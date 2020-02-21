@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -28,8 +29,10 @@ type Kraken struct {
 	TakerFees  float64                                  `json:"taker_fee"`
 	// FeePercent is delegated to save if the fee is in percent or in coin
 	FeePercent bool `json:"fee_percent"`
+	Tickers    []string
 }
 
+const KRAKEN_TICKERS_URL string = `https://api.kraken.com/0/public/Assets`
 const KRAKEN_PAIRS_DETAILS_URL string = `https://api.kraken.com/0/public/AssetPairs`
 const KRAKEN_ORDER_BOOK_URL string = `https://api.kraken.com/0/public/Depth?pair=`
 
@@ -49,6 +52,38 @@ func (k *Kraken) SetFees() {
 	k.MakerFee = 0.16
 	k.TakerFees = 0.26
 	k.FeePercent = true
+}
+
+// GetTickers is delegated to retrieve the list of tickers tradable in the exchange
+func (k *Kraken) GetTickers() error {
+	res := datastructure.Tickers{}
+	var err error
+	var request req.Request
+	var data []byte
+	var tickers []string
+	resp := request.SendRequest(KRAKEN_TICKERS_URL, "GET", nil, nil, false, 10*time.Second)
+	if resp.Error != nil {
+		zap.S().Debugw("Error during http request. Err: " + resp.Error.Error())
+		return resp.Error
+	}
+	if resp.StatusCode != 200 {
+		zap.S().Warnw("Received a non 200 status code: " + strconv.Itoa(resp.StatusCode))
+		return errors.New("NON_200_STATUS_CODE")
+	}
+	data = resp.Body
+	if err = json.Unmarshal(data, &res); err != nil {
+		zap.S().Warn("ERROR! :" + err.Error())
+		return err
+	}
+	zap.S().Infof("Data: %v", res.Result)
+	tickers = make([]string, len(res.Result))
+	i := 0
+	for key := range res.Result {
+		tickers[i] = res.Result[key].Altname
+		i++
+	}
+	k.Tickers = tickers
+	return nil
 }
 
 // GetPairsDetails is delegated to retrieve the pairs detail and the pairs names
@@ -82,7 +117,7 @@ func (k *Kraken) GetPairsDetails() error {
 
 	zap.S().Debugw("Sendind request to [" + KRAKEN_PAIRS_DETAILS_URL + "]")
 	// Call the HTTP method for retrieve the pairs
-	resp := request.SendRequest(KRAKEN_PAIRS_DETAILS_URL, "GET", nil, false)
+	resp := request.SendRequest(KRAKEN_PAIRS_DETAILS_URL, "GET", nil, nil, false, constants.TIMEOUT_REQ*time.Second)
 	if resp.Error != nil {
 		zap.S().Debugw("Error during http request. Err: " + resp.Error.Error())
 		return resp.Error
@@ -140,7 +175,7 @@ func (k *Kraken) GetAllOrderBook() error {
 			url := KRAKEN_ORDER_BOOK_URL + pair + `&count=1`
 			zap.S().Debugw("Sendind request to [" + url + "]")
 			// Call the HTTP method for retrieve the pairs
-			resp := request.SendRequest(url, "GET", nil, false)
+			resp := request.SendRequest(url, "GET", nil, nil, false, constants.TIMEOUT_REQ*time.Second)
 			if resp.Error != nil {
 				zap.S().Warnw("Error during http request. Err: " + resp.Error.Error())
 				continue
@@ -227,7 +262,7 @@ func loadKrakenPairs(data []byte) map[string]datastructure.KrakenPair {
 	return pairInfo
 }
 
-// GetMarketData is delegated to retrieve the data related to the order book
+// GetMarketData is delegated to convert the order book into a standard `market` struct
 func (k *Kraken) GetMarketData(pair string) (market.Market, error) {
 	var markets market.Market
 	markets.Asks = make(map[string][]market.MarketOrder, len(k.OrderBook))
@@ -241,6 +276,7 @@ func (k *Kraken) GetMarketData(pair string) (market.Market, error) {
 			volume, _ := strconv.ParseFloat(ask.Volume, 64)
 			order.Price = price
 			order.Volume = volume
+
 			asks[i] = order
 		}
 		var bids []market.MarketOrder = make([]market.MarketOrder, len(orders.Bids))
@@ -318,7 +354,7 @@ func (k *Kraken) GetOrderBook(pair string) error {
 	url := KRAKEN_ORDER_BOOK_URL + pair + `&count=1`
 	zap.S().Debugw("Sendind request to [" + url + "]")
 	// Call the HTTP method for retrieve the pairs
-	resp := request.SendRequest(url, "GET", nil, false)
+	resp := request.SendRequest(url, "GET", nil, nil, false, constants.TIMEOUT_REQ*time.Second)
 	if resp.Error != nil {
 		zap.S().Warnw("Error during http request. Err: " + resp.Error.Error())
 		return err

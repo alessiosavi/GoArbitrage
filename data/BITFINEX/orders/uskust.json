@@ -1,0 +1,15 @@
+{
+ "pair": "uskust",
+ "bids": [
+  {
+   "price": "0.0006",
+   "amount": "18000"
+  }
+ ],
+ "asks": [
+  {
+   "price": "4999",
+   "amount": "7"
+  }
+ ]
+}

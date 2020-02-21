@@ -23,9 +23,13 @@ const BITFINEX_PAIRS_URL string = `https://api.bitfinex.com/v1/symbols`
 const BITFINEX_PAIRS_DETAILS_URL string = `https://api.bitfinex.com/v1/symbols_details`
 const BITFINEX_ORDER_BOOK_URL string = `https://api.bitfinex.com/v1/book/`
 
+const BITFINEX_TICKERS_DETAILS string = `https://api-pub.bitfinex.com/v2/conf/pub:map:currency:sym`
+
 var BITFINEX_PAIRS_DATA string = path.Join(constants.BITFINEX_PATH, "pairs_list.json")
 var BITFINEX_PAIRS_DETAILS string = path.Join(constants.BITFINEX_PATH, "pairs_info.json")
 var BITFINEX_ORDERBOOK_DATA string = path.Join(constants.BITFINEX_PATH, "orders/")
+
+type BtfinexTickers [][][]string
 
 type Bitfinex struct {
 	PairsNames []string                                   `json:"pairs_name"`
@@ -35,6 +39,7 @@ type Bitfinex struct {
 	TakerFees  float64                                    `json:"taker_fee"`
 	// FeePercent is delegated to save if the fee is in percent or in coin
 	FeePercent bool `json:"fee_percent"`
+	Tickers    []string
 }
 
 // Init is delegated to initialize the map for the given market
@@ -44,12 +49,55 @@ func (b *Bitfinex) Init() {
 	b.SetFees()
 }
 
+// SetFees is delegated to initialize the fee type/amount for the given market
+func (b *Bitfinex) SetFees() {
+	b.MakerFee = 0.1
+	b.TakerFees = 0.2
+	b.FeePercent = true
+}
+
+// GetTickers is delegated to retrive the list of tickers tradable on Bitfinex
+func (b *Bitfinex) GetTickers() error {
+	var (
+		request req.Request
+		data    []byte
+		err     error
+		tickers BtfinexTickers
+	)
+	zap.S().Debugw("Sending request to [" + BITFINEX_TICKERS_DETAILS + "]")
+	// Call the HTTP method for retrieve the pairs
+	resp := request.SendRequest(BITFINEX_TICKERS_DETAILS, "GET", nil, nil, false, 10*time.Second)
+	if resp.Error != nil {
+		zap.S().Warnw("Error during http request. Err: " + resp.Error.Error())
+		return resp.Error
+	}
+	if resp.StatusCode != 200 {
+		zap.S().Warnw("Received a non 200 status code: " + strconv.Itoa(resp.StatusCode))
+		return errors.New("NON_200_STATUS_CODE")
+	}
+	data = resp.Body
+
+	if err = json.Unmarshal(data, &tickers); err != nil {
+		zap.S().Warnf("Error: %s", err.Error())
+		zap.S().Infof("Data: %s", string(data))
+		return err
+	}
+	var t []string = make([]string, len(tickers[0]))
+	for i := range tickers[0] {
+		t[i] = tickers[0][i][0]
+	}
+	b.Tickers = t
+	return nil
+}
+
 // GetPairsList is delegated to retrieve the type of pairs in the Bitfinex market
 func (b *Bitfinex) GetPairsList() error {
-	var request req.Request
-	var pairs []string
-	var data []byte
-	var err error
+	var (
+		request req.Request
+		pairs   []string
+		data    []byte
+		err     error
+	)
 
 	// Avoid to call the HTTP api if the data are present
 	if fileutils.FileExists(BITFINEX_PAIRS_DATA) {
@@ -60,9 +108,9 @@ func (b *Bitfinex) GetPairsList() error {
 			return err
 		}
 	} else {
-		zap.S().Debugw("Sendind request to [" + BITFINEX_PAIRS_URL + "]")
+		zap.S().Debugw("Sending request to [" + BITFINEX_PAIRS_URL + "]")
 		// Call the HTTP method for retrieve the pairs
-		resp := request.SendRequest(BITFINEX_PAIRS_URL, "GET", nil, false)
+		resp := request.SendRequest(BITFINEX_PAIRS_URL, "GET", nil, nil, false, constants.TIMEOUT_REQ*time.Second)
 		if resp.Error != nil {
 			zap.S().Debugw("Error during http request. Err: " + resp.Error.Error())
 			return err
@@ -103,9 +151,9 @@ func (b *Bitfinex) GetPairsDetails() error {
 			return err
 		}
 	} else {
-		zap.S().Debugw("Sendind request to [" + BITFINEX_PAIRS_DETAILS_URL + "]")
+		zap.S().Debugw("Sending request to [" + BITFINEX_PAIRS_DETAILS_URL + "]")
 		// Call the HTTP method for retrieve the pairs
-		resp := request.SendRequest(BITFINEX_PAIRS_DETAILS_URL, "GET", nil, false)
+		resp := request.SendRequest(BITFINEX_PAIRS_DETAILS_URL, "GET", nil, nil, false, constants.TIMEOUT_REQ*time.Second)
 		if resp.Error != nil {
 			zap.S().Warnw("Error during http request. Err: " + resp.Error.Error())
 			return resp.Error
@@ -160,9 +208,9 @@ func (b *Bitfinex) GetAllOrderBook() error {
 		} else {
 			time.Sleep(2 * time.Second)
 			url := BITFINEX_ORDER_BOOK_URL + pair + "?limit_bids=1&limit_asks=1"
-			zap.S().Debugw("Sendind request to [" + url + "]")
+			zap.S().Debugw("Sending request to [" + url + "]")
 			// Call the HTTP method for retrieve the pairs
-			resp := request.SendRequest(url, "GET", nil, false)
+			resp := request.SendRequest(url, "GET", nil, nil, false, constants.TIMEOUT_REQ*time.Second)
 			if resp.Error != nil {
 				zap.S().Warnw("Error during http request. Err: " + resp.Error.Error())
 				// return resp.Error
@@ -190,13 +238,6 @@ func (b *Bitfinex) GetAllOrderBook() error {
 	// Update the file with the new data
 	utils.DumpStruct(b.OrderBook, path.Join(constants.BITFINEX_PATH, "orders_all.json"))
 	return nil
-}
-
-// SetFees is delegated to initialize the fee type/amount for the given market
-func (b *Bitfinex) SetFees() {
-	b.MakerFee = 0.1
-	b.TakerFees = 0.2
-	b.FeePercent = true
 }
 
 // GetMarketData is delegated to convert the order book into a standard `market` struct
@@ -288,9 +329,9 @@ func (b *Bitfinex) GetOrderBook(pair string) error {
 	orderbook.Pair = pair
 
 	url := BITFINEX_ORDER_BOOK_URL + pair + "?limit_bids=1&limit_asks=1"
-	zap.S().Debugw("Sendind request to [" + url + "]")
+	zap.S().Debugw("Sending request to [" + url + "]")
 	// Call the HTTP method for retrieve the pairs
-	resp := request.SendRequest(url, "GET", nil, false)
+	resp := request.SendRequest(url, "GET", nil, nil, false, constants.TIMEOUT_REQ*time.Second)
 	if resp.Error != nil {
 		zap.S().Warnw("Error during http request. Err: " + resp.Error.Error())
 		return resp.Error

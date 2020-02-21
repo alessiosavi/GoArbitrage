@@ -1,0 +1,15 @@
+{
+ "pair": "uskbtc",
+ "bids": [
+  {
+   "price": "0.0000059",
+   "amount": "30"
+  }
+ ],
+ "asks": [
+  {
+   "price": "0.77",
+   "amount": "20"
+  }
+ ]
+}

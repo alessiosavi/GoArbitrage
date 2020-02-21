@@ -1,0 +1,15 @@
+{
+ "pair": "senbtc",
+ "bids": [
+  {
+   "price": "3e-8",
+   "amount": "644444"
+  }
+ ],
+ "asks": [
+  {
+   "price": "1e-7",
+   "amount": "23706"
+  }
+ ]
+}

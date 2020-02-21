@@ -1,0 +1,15 @@
+{
+ "pair": "atmbtc",
+ "bids": [
+  {
+   "price": "2e-8",
+   "amount": "50000"
+  }
+ ],
+ "asks": [
+  {
+   "price": "5e-8",
+   "amount": "26370.72"
+  }
+ ]
+}

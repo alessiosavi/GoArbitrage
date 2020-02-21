@@ -1,0 +1,11 @@
+{
+ "pair": "zecusd",
+ "bids": [
+  {
+   "price": "5.00",
+   "amount": "88",
+   "timestamp": "1581765520"
+  }
+ ],
+ "asks": []
+}
