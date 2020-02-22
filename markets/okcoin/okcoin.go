@@ -14,7 +14,7 @@ import (
 	"github.com/alessiosavi/GoArbitrage/utils"
 	"go.uber.org/zap"
 
-	constants "github.com/alessiosavi/GoArbitrage/datastructure/constants"
+	"github.com/alessiosavi/GoArbitrage/datastructure/constants"
 	"github.com/alessiosavi/GoArbitrage/datastructure/market"
 	datastructure "github.com/alessiosavi/GoArbitrage/datastructure/okcoin"
 	fileutils "github.com/alessiosavi/GoGPUtils/files"
@@ -26,9 +26,9 @@ import (
 const OKCOIN_PAIRS_URL string = `https://www.okcoin.com/api/spot/v3/instruments/ticker`
 const OKCOIN_PAIRS_DETAILS_URL string = `https://www.okcoin.com/api/spot/v3/instruments/`
 
-var OKCOIN_PAIRS_DATA string = path.Join(constants.OKCOIN_PATH, "pairs_list.json")
-var OKCOIN_PAIRS_DETAILS string = path.Join(constants.OKCOIN_PATH, "pairs_info.json")
-var OKCOIN_ORDERBOOK_DATA string = path.Join(constants.OKCOIN_PATH, "orders/")
+var OKCOIN_PAIRS_DATA = path.Join(constants.OKCOIN_PATH, "pairs_list.json")
+var OKCOIN_PAIRS_DETAILS = path.Join(constants.OKCOIN_PATH, "pairs_info.json")
+var OKCOIN_ORDERBOOK_DATA = path.Join(constants.OKCOIN_PATH, "orders/")
 
 type OkCoin struct {
 	PairsName []string                                 `json:"pairs_name"`
@@ -57,7 +57,7 @@ func (o *OkCoin) SetFees() {
 // GetTickers is delegated to retrieve the list of tickers tradable in the exchange
 func (o *OkCoin) GetTickers() error {
 	if len(o.PairsName) > 0 {
-		var tickers []string = make([]string, len(o.PairsName))
+		var tickers = make([]string, len(o.PairsName))
 		for i := range o.PairsName {
 			tickers[i] = strings.Split(o.PairsName[i], "-")[0]
 		}
@@ -80,7 +80,7 @@ func (o *OkCoin) GetMarketData(pair string) (market.Market, error) {
 	}
 	var order market.MarketOrder
 	if orders, ok := o.OrderBook[pair]; ok {
-		var asks []market.MarketOrder = make([]market.MarketOrder, len(orders.Asks))
+		var asks = make([]market.MarketOrder, len(orders.Asks))
 		for i, ask := range orders.Asks {
 			price, _ := strconv.ParseFloat(ask[0], 64)
 			volume, _ := strconv.ParseFloat(ask[1], 64)
@@ -89,7 +89,7 @@ func (o *OkCoin) GetMarketData(pair string) (market.Market, error) {
 			order.MinVolume = minVolume
 			asks[i] = order
 		}
-		var bids []market.MarketOrder = make([]market.MarketOrder, len(orders.Bids))
+		var bids = make([]market.MarketOrder, len(orders.Bids))
 		for i, bid := range orders.Bids {
 			price, _ := strconv.ParseFloat(bid[0], 64)
 			volume, _ := strconv.ParseFloat(bid[1], 64)
@@ -117,7 +117,7 @@ func (o *OkCoin) GetMarketsData() market.Market {
 	var order market.MarketOrder
 	for key := range o.OrderBook {
 		key_standard = strings.Replace(strings.ToLower(key), "-", "", 1)
-		var asks []market.MarketOrder = make([]market.MarketOrder, len(o.OrderBook[key].Asks))
+		var asks = make([]market.MarketOrder, len(o.OrderBook[key].Asks))
 		for i, ask := range o.OrderBook[key].Asks {
 			price, _ := strconv.ParseFloat(ask[0], 64)
 			volume, _ := strconv.ParseFloat(ask[1], 64)
@@ -125,7 +125,7 @@ func (o *OkCoin) GetMarketsData() market.Market {
 			order.Volume = volume
 			asks[i] = order
 		}
-		var bids []market.MarketOrder = make([]market.MarketOrder, len(o.OrderBook[key].Bids))
+		var bids = make([]market.MarketOrder, len(o.OrderBook[key].Bids))
 		for i, bid := range o.OrderBook[key].Bids {
 			price, _ := strconv.ParseFloat(bid[0], 64)
 			volume, _ := strconv.ParseFloat(bid[1], 64)
@@ -284,7 +284,7 @@ func (o *OkCoin) GetOrderBook(pair string) error {
 
 func (o *OkCoin) GetAllOrderBook() error {
 	var request req.Request
-	var orders map[string]datastructure.OkCoinOrderBook = make(map[string]datastructure.OkCoinOrderBook, len(o.PairsName))
+	var orders = make(map[string]datastructure.OkCoinOrderBook, len(o.PairsName))
 	var data []byte
 	var err error
 
@@ -360,7 +360,7 @@ func getBookURL(pairs string, size int, depth float64) string {
 	return url
 }
 
-var allowed_base []string = []string{"EUR", "EURS", "USD", "USDT", "SGD"}
+var allowed_base = []string{"EUR", "EURS", "USD", "USDT", "SGD"}
 
 // ParsePair is delegated to convert the given pair into the pair compliant with kraken
 func (o *OkCoin) ParsePair(pair string) string {

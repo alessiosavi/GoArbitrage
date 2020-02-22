@@ -16,11 +16,11 @@ func Test_ParsePairOkCoin(t *testing.T) {
 
 	var o okcoin.OkCoin
 	cases := []TestCase{
-		TestCase{Pair: "ethusd", Expected: "ETH-USD", Number: 1}, 
-		TestCase{Pair: "adausd", Expected: "ADA-USD", Number: 2},
-	 	TestCase{Pair: "btceurs", Expected: "BTC-EURS", Number: 3},
-	  	TestCase{Pair: "btcusdt", Expected: "BTC-USDT", Number: 4},
-	  	TestCase{Pair: "eurseur", Expected: "EURS-EUR", Number:5}}
+		{Pair: "ethusd", Expected: "ETH-USD", Number: 1},
+		{Pair: "adausd", Expected: "ADA-USD", Number: 2},
+		{Pair: "btceurs", Expected: "BTC-EURS", Number: 3},
+		{Pair: "btcusdt", Expected: "BTC-USDT", Number: 4},
+		{Pair: "eurseur", Expected: "EURS-EUR", Number: 5}}
 
 	for _, c := range cases {
 		result := o.ParsePair(c.Pair)

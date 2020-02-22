@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
-	constants "github.com/alessiosavi/GoArbitrage/datastructure/constants"
+	"github.com/alessiosavi/GoArbitrage/datastructure/constants"
 	"github.com/alessiosavi/GoArbitrage/datastructure/market"
 	"github.com/alessiosavi/GoArbitrage/engine"
 	"github.com/alessiosavi/GoArbitrage/markets/bitfinex"

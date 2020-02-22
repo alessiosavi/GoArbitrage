@@ -27,8 +27,8 @@ func Test_GetBookUrl(t *testing.T) {
 	}
 
 	cases := []testcase{
-		testcase{pairs: "BTC-USDT", size: 10, depth: 0, expected: "https://www.okcoin.com/api/spot/v3/instruments/BTC-USDT/book?size=10", number: 1},
-		testcase{pairs: "BTC-USDT", size: 10, depth: 0.001, expected: "https://www.okcoin.com/api/spot/v3/instruments/BTC-USDT/book?size=10&depth=0.001", number: 2},
+		{pairs: "BTC-USDT", size: 10, depth: 0, expected: "https://www.okcoin.com/api/spot/v3/instruments/BTC-USDT/book?size=10", number: 1},
+		{pairs: "BTC-USDT", size: 10, depth: 0.001, expected: "https://www.okcoin.com/api/spot/v3/instruments/BTC-USDT/book?size=10&depth=0.001", number: 2},
 	}
 
 	for _, c := range cases {

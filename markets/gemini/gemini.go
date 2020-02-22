@@ -11,7 +11,7 @@ import (
 
 	"go.uber.org/zap"
 
-	constants "github.com/alessiosavi/GoArbitrage/datastructure/constants"
+	"github.com/alessiosavi/GoArbitrage/datastructure/constants"
 	datastructure "github.com/alessiosavi/GoArbitrage/datastructure/gemini"
 	"github.com/alessiosavi/GoArbitrage/datastructure/market"
 	"github.com/alessiosavi/GoArbitrage/utils"
@@ -23,9 +23,9 @@ import (
 const GEMINI_PAIRS_URL string = `https://api.sandbox.gemini.com/v1/symbols`
 const GEMINI_ORDER_BOOK_URL string = `https://api.sandbox.gemini.com/v1/book/`
 
-var GEMINI_PAIRS_DATA string = path.Join(constants.GEMINI_PATH, "pairs_list.json")
-var GEMINI_PAIRS_DETAILS string = path.Join(constants.GEMINI_PATH, "pairs_info.json")
-var GEMINI_ORDERBOOK_DATA string = path.Join(constants.GEMINI_PATH, "orders/")
+var GEMINI_PAIRS_DATA = path.Join(constants.GEMINI_PATH, "pairs_list.json")
+var GEMINI_PAIRS_DETAILS = path.Join(constants.GEMINI_PATH, "pairs_info.json")
+var GEMINI_ORDERBOOK_DATA = path.Join(constants.GEMINI_PATH, "orders/")
 
 type Gemini struct {
 	PairsNames []string                                 `json:"pairs_name"`
@@ -198,7 +198,7 @@ func (g *Gemini) GetMarketData(pair string) (market.Market, error) {
 	markets.MarketName = `GEMINI`
 	var order market.MarketOrder
 	if orders, ok := g.OrderBook[pair]; ok {
-		var asks []market.MarketOrder = make([]market.MarketOrder, len(orders.Asks))
+		var asks = make([]market.MarketOrder, len(orders.Asks))
 		for i, ask := range orders.Asks {
 			price, _ := strconv.ParseFloat(ask.Price, 64)
 			volume, _ := strconv.ParseFloat(ask.Volume, 64)
@@ -206,7 +206,7 @@ func (g *Gemini) GetMarketData(pair string) (market.Market, error) {
 			order.Volume = volume
 			asks[i] = order
 		}
-		var bids []market.MarketOrder = make([]market.MarketOrder, len(orders.Bids))
+		var bids = make([]market.MarketOrder, len(orders.Bids))
 		for i, bid := range orders.Bids {
 			price, _ := strconv.ParseFloat(bid.Price, 64)
 			volume, _ := strconv.ParseFloat(bid.Volume, 64)
@@ -235,7 +235,7 @@ func (g *Gemini) GetMarketsData() market.Market {
 	var order market.MarketOrder
 	for key := range g.OrderBook {
 		key_standard = strings.Replace(strings.ToLower(key), "-", "", 1)
-		var asks []market.MarketOrder = make([]market.MarketOrder, len(g.OrderBook[key].Asks))
+		var asks = make([]market.MarketOrder, len(g.OrderBook[key].Asks))
 		for i, ask := range g.OrderBook[key].Asks {
 			price, _ := strconv.ParseFloat(ask.Price, 64)
 			volume, _ := strconv.ParseFloat(ask.Volume, 64)
@@ -243,7 +243,7 @@ func (g *Gemini) GetMarketsData() market.Market {
 			order.Volume = volume
 			asks[i] = order
 		}
-		var bids []market.MarketOrder = make([]market.MarketOrder, len(g.OrderBook[key].Bids))
+		var bids = make([]market.MarketOrder, len(g.OrderBook[key].Bids))
 		for i, bid := range g.OrderBook[key].Bids {
 			price, _ := strconv.ParseFloat(bid.Price, 64)
 			volume, _ := strconv.ParseFloat(bid.Volume, 64)

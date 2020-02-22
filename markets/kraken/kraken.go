@@ -12,7 +12,7 @@ import (
 
 	"go.uber.org/zap"
 
-	constants "github.com/alessiosavi/GoArbitrage/datastructure/constants"
+	"github.com/alessiosavi/GoArbitrage/datastructure/constants"
 	datastructure "github.com/alessiosavi/GoArbitrage/datastructure/kraken"
 	"github.com/alessiosavi/GoArbitrage/datastructure/market"
 	"github.com/alessiosavi/GoArbitrage/utils"
@@ -36,9 +36,9 @@ const KRAKEN_TICKERS_URL string = `https://api.kraken.com/0/public/Assets`
 const KRAKEN_PAIRS_DETAILS_URL string = `https://api.kraken.com/0/public/AssetPairs`
 const KRAKEN_ORDER_BOOK_URL string = `https://api.kraken.com/0/public/Depth?pair=`
 
-var KRAKEN_PAIRS_DATA string = path.Join(constants.KRAKEN_PATH, "pairs_list.json")
-var KRAKEN_PAIRS_DETAILS string = path.Join(constants.KRAKEN_PATH, "pairs_info.json")
-var KRAKEN_ORDERBOOK_DATA string = path.Join(constants.KRAKEN_PATH, "orders/")
+var KRAKEN_PAIRS_DATA = path.Join(constants.KRAKEN_PATH, "pairs_list.json")
+var KRAKEN_PAIRS_DETAILS = path.Join(constants.KRAKEN_PATH, "pairs_info.json")
+var KRAKEN_ORDERBOOK_DATA = path.Join(constants.KRAKEN_PATH, "orders/")
 
 // Init is delegated to initialize the maps for the kraken
 func (k *Kraken) Init() {
@@ -229,7 +229,7 @@ func loadKrakenPairs(data []byte) map[string]datastructure.KrakenPair {
 
 	// Creating the maps for the JSON data
 	m := map[string]interface{}{}
-	var pairInfo map[string]datastructure.KrakenPair = make(map[string]datastructure.KrakenPair)
+	var pairInfo = make(map[string]datastructure.KrakenPair)
 
 	// Parsing/Unmarshalling JSON
 	err = json.Unmarshal(data, &m)
@@ -270,7 +270,7 @@ func (k *Kraken) GetMarketData(pair string) (market.Market, error) {
 	markets.MarketName = `KRAKEN`
 	var order market.MarketOrder
 	if orders, ok := k.OrderBook[pair]; ok {
-		var asks []market.MarketOrder = make([]market.MarketOrder, len(orders.Asks))
+		var asks = make([]market.MarketOrder, len(orders.Asks))
 		for i, ask := range orders.Asks {
 			price, _ := strconv.ParseFloat(ask.Price, 64)
 			volume, _ := strconv.ParseFloat(ask.Volume, 64)
@@ -279,7 +279,7 @@ func (k *Kraken) GetMarketData(pair string) (market.Market, error) {
 
 			asks[i] = order
 		}
-		var bids []market.MarketOrder = make([]market.MarketOrder, len(orders.Bids))
+		var bids = make([]market.MarketOrder, len(orders.Bids))
 		for i, bid := range orders.Bids {
 			price, _ := strconv.ParseFloat(bid.Price, 64)
 			volume, _ := strconv.ParseFloat(bid.Volume, 64)
@@ -310,7 +310,7 @@ func (k *Kraken) GetMarketsData() market.Market {
 
 	for key := range k.OrderBook {
 		key_standard = strings.Replace(strings.ToLower(key), "-", "", 1)
-		var asks []market.MarketOrder = make([]market.MarketOrder, len(k.OrderBook[key].Asks))
+		var asks = make([]market.MarketOrder, len(k.OrderBook[key].Asks))
 
 		for i, ask := range k.OrderBook[key].Asks {
 			price, _ := strconv.ParseFloat(ask.Price, 64)
@@ -319,7 +319,7 @@ func (k *Kraken) GetMarketsData() market.Market {
 			order.Volume = volume
 			asks[i] = order
 		}
-		var bids []market.MarketOrder = make([]market.MarketOrder, len(k.OrderBook[key].Bids))
+		var bids = make([]market.MarketOrder, len(k.OrderBook[key].Bids))
 		for i, bid := range k.OrderBook[key].Bids {
 			price, _ := strconv.ParseFloat(bid.Price, 64)
 			volume, _ := strconv.ParseFloat(bid.Volume, 64)

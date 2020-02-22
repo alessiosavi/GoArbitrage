@@ -46,7 +46,7 @@ func initDummyWalletCore(marketName string, currencies map[string]struct{}) Wall
 
 // InitDummyWallet is delegated to initialize a dummy wallet for all the coin
 func InitDummyWallet(markets []Market) {
-	var c map[string]struct{} = make(map[string]struct{})
+	var c = make(map[string]struct{})
 	for i := range markets {
 		// Save the list of pair name
 		for key := range markets[i].Asks {
@@ -61,7 +61,7 @@ func InitDummyWallet(markets []Market) {
 
 // InitDummyWalletForPairs is delegated to initialize a dummy wallet with the given pairs
 func InitDummyWalletForPairs(markets []Market, pairs []string) []Market {
-	var c map[string]struct{} = make(map[string]struct{}, len(pairs))
+	var c = make(map[string]struct{}, len(pairs))
 	for i := range pairs {
 		c[pairs[i]] = struct{}{}
 	}

@@ -13,7 +13,7 @@ import (
 	"go.uber.org/zap"
 
 	datastructure "github.com/alessiosavi/GoArbitrage/datastructure/bitfinex"
-	constants "github.com/alessiosavi/GoArbitrage/datastructure/constants"
+	"github.com/alessiosavi/GoArbitrage/datastructure/constants"
 	"github.com/alessiosavi/GoArbitrage/datastructure/market"
 	fileutils "github.com/alessiosavi/GoGPUtils/files"
 	req "github.com/alessiosavi/Requests"
@@ -25,9 +25,9 @@ const BITFINEX_ORDER_BOOK_URL string = `https://api.bitfinex.com/v1/book/`
 
 const BITFINEX_TICKERS_DETAILS string = `https://api-pub.bitfinex.com/v2/conf/pub:map:currency:sym`
 
-var BITFINEX_PAIRS_DATA string = path.Join(constants.BITFINEX_PATH, "pairs_list.json")
-var BITFINEX_PAIRS_DETAILS string = path.Join(constants.BITFINEX_PATH, "pairs_info.json")
-var BITFINEX_ORDERBOOK_DATA string = path.Join(constants.BITFINEX_PATH, "orders/")
+var BITFINEX_PAIRS_DATA = path.Join(constants.BITFINEX_PATH, "pairs_list.json")
+var BITFINEX_PAIRS_DETAILS = path.Join(constants.BITFINEX_PATH, "pairs_info.json")
+var BITFINEX_ORDERBOOK_DATA = path.Join(constants.BITFINEX_PATH, "orders/")
 
 type BtfinexTickers [][][]string
 
@@ -82,7 +82,7 @@ func (b *Bitfinex) GetTickers() error {
 		zap.S().Infof("Data: %s", string(data))
 		return err
 	}
-	var t []string = make([]string, len(tickers[0]))
+	var t = make([]string, len(tickers[0]))
 	for i := range tickers[0] {
 		t[i] = tickers[0][i][0]
 	}
@@ -249,7 +249,7 @@ func (b *Bitfinex) GetMarketData(pair string) (market.Market, error) {
 	minVolume, _ := strconv.ParseFloat(b.Pairs[pair].MinOrder, 64)
 	var order market.MarketOrder
 	if orders, ok := b.OrderBook[pair]; ok {
-		var asks []market.MarketOrder = make([]market.MarketOrder, len(orders.Asks))
+		var asks = make([]market.MarketOrder, len(orders.Asks))
 		for i, ask := range orders.Asks {
 			price, _ := strconv.ParseFloat(ask.Price, 64)
 			volume, _ := strconv.ParseFloat(ask.Volume, 64)
@@ -258,7 +258,7 @@ func (b *Bitfinex) GetMarketData(pair string) (market.Market, error) {
 			order.MinVolume = minVolume
 			asks[i] = order
 		}
-		var bids []market.MarketOrder = make([]market.MarketOrder, len(orders.Bids))
+		var bids = make([]market.MarketOrder, len(orders.Bids))
 		for i, bid := range orders.Bids {
 			price, _ := strconv.ParseFloat(bid.Price, 64)
 			volume, _ := strconv.ParseFloat(bid.Volume, 64)
@@ -290,7 +290,7 @@ func (b *Bitfinex) GetMarketsData() market.Market {
 	for key := range b.OrderBook {
 
 		key_standard = strings.Replace(strings.ToLower(key), "-", "", 1)
-		var asks []market.MarketOrder = make([]market.MarketOrder, len(b.OrderBook[key].Asks))
+		var asks = make([]market.MarketOrder, len(b.OrderBook[key].Asks))
 		for i, ask := range b.OrderBook[key].Asks {
 			price, _ := strconv.ParseFloat(ask.Price, 64)
 			volume, _ := strconv.ParseFloat(ask.Volume, 64)
@@ -298,7 +298,7 @@ func (b *Bitfinex) GetMarketsData() market.Market {
 			order.Volume = volume
 			asks[i] = order
 		}
-		var bids []market.MarketOrder = make([]market.MarketOrder, len(b.OrderBook[key].Bids))
+		var bids = make([]market.MarketOrder, len(b.OrderBook[key].Bids))
 		for i, bid := range b.OrderBook[key].Bids {
 			price, _ := strconv.ParseFloat(bid.Price, 64)
 			volume, _ := strconv.ParseFloat(bid.Volume, 64)

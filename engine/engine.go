@@ -35,7 +35,7 @@ func GetCommonCoin(markets ...market.Market) []string {
 
 	// mapWithMaxLenght is the index of the given map that contains the higher number of pair,
 	// that will be used to be compared against the other market
-	var mapWithMaxLenght int = 0
+	var mapWithMaxLenght = 0
 
 	// Retrieve the map with the max lenght
 	for i := 1; i < len(markets); i++ {
@@ -137,8 +137,8 @@ func Arbitrage(pair string, markets []market.Market) {
 	}
 	wg.Wait()
 	zap.S().Info("Time execution: ", time.Since(start))
-	var minBuy market.Market = markets[0]
-	var maxSell market.Market = markets[0]
+	var minBuy = markets[0]
+	var maxSell = markets[0]
 	var pair1, pair2, pair3 string
 	var sb strings.Builder
 	var opportunities []opportunity
@@ -191,7 +191,7 @@ func Arbitrage(pair string, markets []market.Market) {
 		}
 	}
 	if len(opportunities) > 0 {
-		var index int = 0
+		var index = 0
 		for i := 1; i < len(opportunities); i++ {
 			if opportunities[i].Earning > opportunities[index].Earning {
 				index = i
