@@ -6,5 +6,5 @@ GoArbitrage
 log
 .idea/
 nohup.out
-data.log
+data.json
 data.tar.xz

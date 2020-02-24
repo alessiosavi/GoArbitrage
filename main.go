@@ -14,6 +14,7 @@ import (
 	"github.com/alessiosavi/GoArbitrage/markets/gemini"
 	"github.com/alessiosavi/GoArbitrage/markets/kraken"
 	"github.com/alessiosavi/GoArbitrage/markets/okcoin"
+	"github.com/alessiosavi/GoArbitrage/utils"
 )
 
 func main() {
@@ -68,11 +69,13 @@ func main() {
 	markets = append(markets, okcoin.GetMarketsData())
 
 	pairs := engine.GetCommonCoin(markets...)
-	markets = market.InitDummyWalletForPairs(markets, pairs)
+	currencies := utils.ExtractCurrenciesFromPairs(pairs)
+	market.InitDummyWalletForPairs(&markets, currencies)
 	zap.S().Infof("Common pairs: %v", pairs)
+
 	for {
 		for _, pair := range pairs {
-			engine.Arbitrage(pair, markets)
+			engine.Arbitrage(pair, &markets)
 		}
 	}
 }
@@ -110,5 +113,10 @@ func initDataFolder() {
 		zap.S().Debugw("Creating folder for KRAKEN data ...")
 		os.MkdirAll(constants.KRAKEN_PATH, os.ModePerm)
 		os.MkdirAll(kraken.KRAKEN_ORDERBOOK_DATA, os.ModePerm)
+	}
+	// Write the initial json character
+	if f, err := os.OpenFile("data.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+		defer f.Close()
+		f.WriteString("[")
 	}
 }

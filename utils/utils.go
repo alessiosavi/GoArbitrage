@@ -56,3 +56,27 @@ func InitClient() *redis.Client {
 	// Output: PONG <nil>
 	return client
 }
+
+// extractCurrenciesFromPair is delegated to return the base and the quote currencies
+func extractCurrenciesFromPair(pair string) (string, string) {
+	//pair := "btcusd"
+	quote := pair[len(pair)-3:]         // usd
+	base := pair[:len(pair)-len(quote)] // btc
+	return base, quote
+}
+
+func ExtractCurrenciesFromPairs(pairs []string) []string {
+	var c map[string]struct{} = make(map[string]struct{})
+	for i := range pairs {
+		a, b := extractCurrenciesFromPair(pairs[i])
+		c[a] = struct{}{}
+		c[b] = struct{}{}
+	}
+	var currencies []string = make([]string, len(c))
+	i := 0
+	for key := range c {
+		currencies[i] = key
+		i++
+	}
+	return currencies
+}

@@ -1,7 +1,5 @@
 package market
 
-import "go.uber.org/zap"
-
 type Market struct {
 	// Name of the market
 	MarketName string `json:"market_name"`
@@ -39,7 +37,7 @@ func initDummyWalletCore(marketName string, currencies map[string]struct{}) Wall
 	w.MarketName = marketName
 	w.Coins = make(map[string]float64, len(currencies))
 	for cName := range currencies {
-		w.Coins[cName] = 999999
+		w.Coins[cName] = 10000
 	}
 	return w
 }
@@ -60,16 +58,14 @@ func InitDummyWallet(markets []Market) {
 }
 
 // InitDummyWalletForPairs is delegated to initialize a dummy wallet with the given pairs
-func InitDummyWalletForPairs(markets []Market, pairs []string) []Market {
+func InitDummyWalletForPairs(markets *[]Market, pairs []string) {
 	var c = make(map[string]struct{}, len(pairs))
 	for i := range pairs {
 		c[pairs[i]] = struct{}{}
 	}
 
-	for i := range markets {
-		markets[i].Wallet = initDummyWalletCore(markets[i].MarketName, c)
-		zap.S().Infof("Wallet: %+v", markets[i].Wallet)
+	for i := range *markets {
+		(*markets)[i].Wallet = initDummyWalletCore((*markets)[i].MarketName, c)
 	}
 
-	return markets
 }
