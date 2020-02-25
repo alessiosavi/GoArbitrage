@@ -196,12 +196,12 @@ func Arbitrage(pair string, markets *[]market.Market) {
 			if minBuy.MarketName != maxSell.MarketName {
 				pair2 = parsePair(pair, *maxSell)
 				pair3 = parsePair(pair, *minBuy)
-				if maxSell.Asks[pair2][0].Volume > maxSell.Asks[pair2][0].MinVolume && minBuy.Bids[pair3][0].Volume > minBuy.Bids[pair3][0].MinVolume {
-					volume := getMin(maxSell.Asks[pair2][0].Volume, minBuy.Bids[pair3][0].Volume)
-					buyTotal := volume * minBuy.Bids[pair3][0].Price
-					buyTotal += percent(buyTotal, minBuy.TakerFee)
-					sellTotal := volume * maxSell.Asks[pair2][0].Price
-					sellTotal += percent(sellTotal, maxSell.TakerFee)
+				volume := getMin(maxSell.Asks[pair2][0].Volume, minBuy.Bids[pair3][0].Volume)
+				buyTotal := volume * minBuy.Bids[pair3][0].Price
+				buyTotal += percent(buyTotal, minBuy.TakerFee)
+				sellTotal := volume * maxSell.Asks[pair2][0].Price
+				sellTotal += percent(sellTotal, maxSell.TakerFee)
+				if sellTotal-buyTotal > 0 {
 					sb.WriteString(fmt.Sprintf("\nArbitrage opportunity for pair [%s] with volume: %f\n", pair, volume))
 					sb.WriteString(fmt.Sprintf("Buy: %f Sell: %f | Difference: %f\n", buyTotal, sellTotal, sellTotal-buyTotal))
 					sb.WriteString(fmt.Sprintf("Buy Market: %s Price: %f Volume: %f\n", minBuy.MarketName, minBuy.Bids[pair3][0].Price, volume))
@@ -226,16 +226,17 @@ func Arbitrage(pair string, markets *[]market.Market) {
 		var index = 0
 		// Iterate the opportunities in order to extract only the most relevant
 		for i := 1; i < len(opportunities); i++ {
-			if opportunities[i].Earning > opportunities[index].Earning {
+			if opportunities[i].Earning > opportunities[index].Earning && opportunities[index].Earning > 0 {
 				index = i
 			}
 		}
-		opportunities[index].CurrentWallet = getWalletFromMarkets(*markets)
+
 		zap.S().Infof("Found the best opportunities for index %d: %+v", index, opportunities[index])
 		zap.S().Debugf("All the data: %+v", opportunities)
 		zap.S().Infof("Before the reduce:  \nMinBuy: %+v \nMaxSell: %+v ", minBuy.Wallet, maxSell.Wallet)
 		reduceWalletBalance(minBuy, maxSell, opportunities[index], pair)
 		zap.S().Infof("After the reduce:  \nMinBuy: %+v \nMaxSell: %+v ", minBuy.Wallet, maxSell.Wallet)
+		opportunities[index].CurrentWallet = getWalletFromMarkets(*markets)
 		if data, err := json.Marshal(opportunities[index]); err == nil {
 			if f, err := os.OpenFile("data.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
 				defer f.Close()
@@ -286,11 +287,11 @@ func reduceWalletBalance(buy, sell *market.Market, operation opportunity, pair s
 	buyPrice := operation.BuyPrice
 	sellPrice := operation.SellPrice
 
-	buy.Wallet.Coins[baseCurrency] -= volume * buyPrice
-	buy.Wallet.Coins[quoteCurrency] += volume
+	buy.Wallet.Coins[quoteCurrency] -= volume * buyPrice
+	buy.Wallet.Coins[baseCurrency] += volume
 
-	sell.Wallet.Coins[baseCurrency] += volume * sellPrice
-	buy.Wallet.Coins[quoteCurrency] -= volume
+	sell.Wallet.Coins[quoteCurrency] += volume * sellPrice
+	sell.Wallet.Coins[baseCurrency] -= volume
 
 	return *buy, *sell
 
