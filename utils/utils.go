@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/alessiosavi/GoArbitrage/datastructure/market"
 	fileutils "github.com/alessiosavi/GoGPUtils/files"
 	"github.com/go-redis/redis/v7"
 	"go.uber.org/zap"
@@ -79,4 +80,12 @@ func ExtractCurrenciesFromPairs(pairs []string) []string {
 		i++
 	}
 	return currencies
+}
+
+func RemoveMarket(m []market.Market, i []int) []market.Market {
+	for i := 0; i < len(m); i++ {
+		m = append(m[:i], m[i+1:]...)
+		i-- // Since we just deleted a[i], we must redo that index
+	}
+	return m
 }

@@ -110,7 +110,7 @@ func (b *Bitfinex) GetPairsList() error {
 	} else {
 		zap.S().Debugw("Sending request to [" + BITFINEX_PAIRS_URL + "]")
 		// Call the HTTP method for retrieve the pairs
-		resp := request.SendRequest(BITFINEX_PAIRS_URL, "GET", nil, nil, false, constants.TIMEOUT_REQ*time.Second)
+		resp := request.SendRequest(BITFINEX_PAIRS_URL, "GET", nil, nil, false, constants.TIMEOUT_REQ*time.Millisecond)
 		if resp.Error != nil {
 			zap.S().Debugw("Error during http request. Err: " + resp.Error.Error())
 			return err
@@ -153,7 +153,7 @@ func (b *Bitfinex) GetPairsDetails() error {
 	} else {
 		zap.S().Debugw("Sending request to [" + BITFINEX_PAIRS_DETAILS_URL + "]")
 		// Call the HTTP method for retrieve the pairs
-		resp := request.SendRequest(BITFINEX_PAIRS_DETAILS_URL, "GET", nil, nil, false, constants.TIMEOUT_REQ*time.Second)
+		resp := request.SendRequest(BITFINEX_PAIRS_DETAILS_URL, "GET", nil, nil, false, constants.TIMEOUT_REQ*time.Millisecond)
 		if resp.Error != nil {
 			zap.S().Warnw("Error during http request. Err: " + resp.Error.Error())
 			return resp.Error
@@ -210,7 +210,7 @@ func (b *Bitfinex) GetAllOrderBook() error {
 			url := BITFINEX_ORDER_BOOK_URL + pair + "?limit_bids=1&limit_asks=1"
 			zap.S().Debugw("Sending request to [" + url + "]")
 			// Call the HTTP method for retrieve the pairs
-			resp := request.SendRequest(url, "GET", nil, nil, false, constants.TIMEOUT_REQ*time.Second)
+			resp := request.SendRequest(url, "GET", nil, nil, false, constants.TIMEOUT_REQ*time.Millisecond)
 			if resp.Error != nil {
 				zap.S().Warnw("Error during http request. Err: " + resp.Error.Error())
 				// return resp.Error
@@ -331,7 +331,7 @@ func (b *Bitfinex) GetOrderBook(pair string) error {
 	url := BITFINEX_ORDER_BOOK_URL + pair + "?limit_bids=1&limit_asks=1"
 	zap.S().Debugw("Sending request to [" + url + "]")
 	// Call the HTTP method for retrieve the pairs
-	resp := request.SendRequest(url, "GET", nil, nil, false, constants.TIMEOUT_REQ*time.Second)
+	resp := request.SendRequest(url, "GET", nil, nil, false, constants.TIMEOUT_REQ*time.Millisecond)
 	if resp.Error != nil {
 		zap.S().Warnw("Error during http request. Err: " + resp.Error.Error())
 		return resp.Error

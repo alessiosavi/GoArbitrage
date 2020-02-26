@@ -6,4 +6,4 @@ const OKCOIN_PATH string = `./data/OKCOIN/`
 const GEMINI_PATH string = `./data/GEMINI/`
 const KRAKEN_PATH string = `./data/KRAKEN/`
 
-const TIMEOUT_REQ = 2
+const TIMEOUT_REQ = 2000

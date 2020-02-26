@@ -169,7 +169,7 @@ func (o *OkCoin) GetPairsList() error {
 	}
 	zap.S().Debugw("Sendind request to [" + OKCOIN_PAIRS_URL + "]")
 	// Call the HTTP method for retrieve the pairs
-	resp := request.SendRequest(OKCOIN_PAIRS_URL, "GET", nil, nil, false, constants.TIMEOUT_REQ*time.Second)
+	resp := request.SendRequest(OKCOIN_PAIRS_URL, "GET", nil, nil, false, constants.TIMEOUT_REQ*time.Millisecond)
 	if resp.Error != nil {
 		zap.S().Warnw("Error during http request. Err: " + resp.Error.Error())
 		return resp.Error
@@ -213,7 +213,7 @@ func (o *OkCoin) GetPairsDetails() error {
 	} else {
 		zap.S().Debugw("Sendind request to [" + OKCOIN_PAIRS_DETAILS_URL + "]")
 		// Call the HTTP method for retrieve the pairs
-		resp := request.SendRequest(OKCOIN_PAIRS_DETAILS_URL, "GET", nil, nil, false, constants.TIMEOUT_REQ*time.Second)
+		resp := request.SendRequest(OKCOIN_PAIRS_DETAILS_URL, "GET", nil, nil, false, constants.TIMEOUT_REQ*time.Millisecond)
 		if resp.Error != nil {
 			zap.S().Debugw("Error during http request. Err: " + resp.Error.Error())
 			return resp.Error
@@ -253,7 +253,7 @@ func (o *OkCoin) GetOrderBook(pair string) error {
 	url := OKCOIN_PAIRS_DETAILS_URL + pair + "/book?size=1"
 	zap.S().Debug("Sendind request to [" + url + "]")
 	// Call the HTTP method for retrieve the pairs
-	resp := request.SendRequest(url, "GET", nil, nil, false, constants.TIMEOUT_REQ*time.Second)
+	resp := request.SendRequest(url, "GET", nil, nil, false, constants.TIMEOUT_REQ*time.Millisecond)
 	if resp.Error != nil {
 		zap.S().Debug("Error during http request. Err: " + resp.Error.Error())
 		return resp.Error
@@ -310,7 +310,7 @@ func (o *OkCoin) GetAllOrderBook() error {
 			url := OKCOIN_PAIRS_DETAILS_URL + pair + "/book?size=1"
 			zap.S().Debugw("Sendind request to [" + url + "]")
 			// Call the HTTP method for retrieve the pairs
-			resp := request.SendRequest(url, "GET", nil, nil, false, constants.TIMEOUT_REQ*time.Second)
+			resp := request.SendRequest(url, "GET", nil, nil, false, constants.TIMEOUT_REQ*time.Millisecond)
 			if resp.Error != nil {
 				zap.S().Debugw("Error during http request. Err: " + resp.Error.Error())
 				continue

@@ -72,7 +72,6 @@ func main() {
 	currencies := utils.ExtractCurrenciesFromPairs(pairs)
 	market.InitDummyWalletForPairs(&markets, currencies)
 	zap.S().Infof("Common pairs: %v", pairs)
-
 	for {
 		for _, pair := range pairs {
 			engine.Arbitrage(pair, &markets)

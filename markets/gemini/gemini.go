@@ -77,7 +77,7 @@ func (g *Gemini) GetPairsList() error {
 	} else {
 		zap.S().Debugw("Sendind request to [" + GEMINI_PAIRS_URL + "]")
 		// Call the HTTP method for retrieve the pairs
-		resp := request.SendRequest(GEMINI_PAIRS_URL, "GET", nil, nil, false, constants.TIMEOUT_REQ*time.Second)
+		resp := request.SendRequest(GEMINI_PAIRS_URL, "GET", nil, nil, false, constants.TIMEOUT_REQ*time.Millisecond)
 		if resp.Error != nil {
 			zap.S().Warnw("Error during http request. Err: " + resp.Error.Error())
 			return resp.Error
@@ -159,7 +159,7 @@ func (g *Gemini) GetAllOrderBook() error {
 			url := GEMINI_ORDER_BOOK_URL + pair + "?limit_bids=1&limit_asks=1"
 			zap.S().Debugw("Sendind request to [" + url + "]")
 			// Call the HTTP method for retrieve the pairs
-			resp := request.SendRequest(url, "GET", nil, nil, false, constants.TIMEOUT_REQ*time.Second)
+			resp := request.SendRequest(url, "GET", nil, nil, false, constants.TIMEOUT_REQ*time.Millisecond)
 			if resp.Error != nil {
 				zap.S().Warnw("Error during http request. Err: " + resp.Error.Error())
 				continue
@@ -268,7 +268,7 @@ func (g *Gemini) GetOrderBook(pair string) error {
 	url := GEMINI_ORDER_BOOK_URL + pair + "?limit_bids=1&limit_asks=1"
 	zap.S().Debugw("Sendind request to [" + url + "]")
 	// Call the HTTP method for retrieve the pairs
-	resp := request.SendRequest(url, "GET", nil, nil, false, constants.TIMEOUT_REQ*time.Second)
+	resp := request.SendRequest(url, "GET", nil, nil, false, constants.TIMEOUT_REQ*time.Millisecond)
 	if resp.Error != nil {
 		zap.S().Warnw("Error during http request. Err: " + resp.Error.Error())
 		return err

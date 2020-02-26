@@ -14,6 +14,7 @@ import (
 	"github.com/alessiosavi/GoArbitrage/markets/gemini"
 	"github.com/alessiosavi/GoArbitrage/markets/kraken"
 	"github.com/alessiosavi/GoArbitrage/markets/okcoin"
+	"github.com/alessiosavi/GoArbitrage/utils"
 	"go.uber.org/zap"
 )
 
@@ -77,6 +78,7 @@ func Arbitrage(pair string, markets *[]market.Market) {
 	var wg sync.WaitGroup
 	// Execute HTTP request in parallel
 	start := time.Now()
+	var toRemove []int
 	for i := range *markets {
 		switch (*markets)[i].MarketName {
 		case "KRAKEN":
@@ -89,17 +91,18 @@ func Arbitrage(pair string, markets *[]market.Market) {
 				var makerFee, takerFee float64
 				makerFee = (*markets)[i].MakerFee
 				takerFee = (*markets)[i].TakerFee
+				// FIXME: In case of error, the wallet will not be populated!
 				if kraken.GetOrderBook(pair) == nil {
 					(*markets)[i], err = kraken.GetMarketData(pair)
-					if err != nil {
-						log.Println("Unable to retrieve KRAKEN data ", err)
+					if err == nil {
+						(*markets)[i].Wallet = w
+						(*markets)[i].MakerFee = makerFee
+						(*markets)[i].TakerFee = takerFee
 						return
 					}
-					(*markets)[i].Wallet = w
-					(*markets)[i].MakerFee = makerFee
-					(*markets)[i].TakerFee = takerFee
-
+					log.Println("Unable to retrieve KRAKEN data ", err)
 				}
+				toRemove = append(toRemove, i)
 			}(i, &wg)
 		case "OKCOIN":
 			wg.Add(1)
@@ -113,14 +116,15 @@ func Arbitrage(pair string, markets *[]market.Market) {
 				pair := okcoin.ParsePair(pair)
 				if okcoin.GetOrderBook(pair) == nil {
 					(*markets)[i], err = okcoin.GetMarketData(pair)
-					if err != nil {
-						log.Println("Unable to retrieve OKCOIN data ", err)
+					if err == nil {
+						(*markets)[i].Wallet = w
+						(*markets)[i].MakerFee = makerFee
+						(*markets)[i].TakerFee = takerFee
 						return
 					}
-					(*markets)[i].Wallet = w
-					(*markets)[i].MakerFee = makerFee
-					(*markets)[i].TakerFee = takerFee
+					log.Println("Unable to retrieve OKCOIN data ", err)
 				}
+				toRemove = append(toRemove, i)
 			}(i, &wg)
 		case "BITFINEX":
 			wg.Add(1)
@@ -134,14 +138,15 @@ func Arbitrage(pair string, markets *[]market.Market) {
 				takerFee = (*markets)[i].TakerFee
 				if bitfinex.GetOrderBook(pair) == nil {
 					(*markets)[i], err = bitfinex.GetMarketData(pair)
-					if err != nil {
-						log.Println("Unable to retrieve BITFINEX data ", err)
+					if err == nil {
+						(*markets)[i].Wallet = w
+						(*markets)[i].MakerFee = makerFee
+						(*markets)[i].TakerFee = takerFee
 						return
 					}
-					(*markets)[i].Wallet = w
-					(*markets)[i].MakerFee = makerFee
-					(*markets)[i].TakerFee = takerFee
+					log.Println("Unable to retrieve BITFINEX data ", err)
 				}
+				toRemove = append(toRemove, i)
 			}(i, &wg)
 		case "GEMINI":
 			wg.Add(1)
@@ -154,19 +159,26 @@ func Arbitrage(pair string, markets *[]market.Market) {
 				takerFee = (*markets)[i].TakerFee
 				if gemini.GetOrderBook(pair) == nil {
 					(*markets)[i], err = gemini.GetMarketData(pair)
-					if err != nil {
-						log.Println("Unable to retrieve GEMINI data: ", err)
+					if err == nil {
+						(*markets)[i].Wallet = w
+						(*markets)[i].MakerFee = makerFee
+						(*markets)[i].TakerFee = takerFee
 						return
 					}
-					(*markets)[i].Wallet = w
-					(*markets)[i].MakerFee = makerFee
-					(*markets)[i].TakerFee = takerFee
+					log.Println("Unable to retrieve GEMINI data: ", err)
 				}
+				toRemove = append(toRemove, i)
 			}(i, &wg)
 		}
 	}
 	wg.Wait()
+	*markets = utils.RemoveMarket(*markets, toRemove)
 	zap.S().Info("Time execution: ", time.Since(start))
+
+	if len(*markets) < 2 {
+		zap.S().Warnf("Not have enough market to compare! Necessary at least 2, found: %d", len(*markets))
+		return
+	}
 	var minBuy *market.Market = &(*markets)[0]
 	var maxSell *market.Market = &(*markets)[0]
 
@@ -231,12 +243,12 @@ func Arbitrage(pair string, markets *[]market.Market) {
 			}
 		}
 
-		zap.S().Infof("Found the best opportunities for index %d: %+v", index, opportunities[index])
-		zap.S().Debugf("All the data: %+v", opportunities)
 		zap.S().Infof("Before the reduce:  \nMinBuy: %+v \nMaxSell: %+v ", minBuy.Wallet, maxSell.Wallet)
 		reduceWalletBalance(minBuy, maxSell, opportunities[index], pair)
 		zap.S().Infof("After the reduce:  \nMinBuy: %+v \nMaxSell: %+v ", minBuy.Wallet, maxSell.Wallet)
 		opportunities[index].CurrentWallet = getWalletFromMarkets(*markets)
+		zap.S().Infof("Found the best opportunities for index %d: %+v", index, opportunities[index])
+		zap.S().Debugf("All the data: %+v", opportunities)
 		if data, err := json.Marshal(opportunities[index]); err == nil {
 			if f, err := os.OpenFile("data.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
 				defer f.Close()
