@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/alessiosavi/GoArbitrage/datastructure/market"
@@ -29,4 +30,21 @@ func Test_RemoveMarket(t *testing.T) {
 		t.Errorf("ERROR! Invalid data, expected 5 and 6: %v", result)
 	}
 	t.Log(result)
+}
+
+func Test_ExtractCurrenciesFromPairs(t *testing.T) {
+	var testData1 []string = []string{"ethbtc", "btceth"}
+	var expected []string = []string{"eth", "btc"}
+	result1 := ExtractCurrenciesFromPairs(testData1)
+	if !reflect.DeepEqual(expected, result1) {
+		t.Errorf("ERROR! Expected: %v | Result: %v", expected, result1)
+	}
+	// Will fail with 4 char pair
+	// testData1 = []string{"ethtest", "testeth"}
+	// expected = []string{"eth", "test"}
+	// result1 = ExtractCurrenciesFromPairs(testData1)
+	// if !reflect.DeepEqual(expected, result1) {
+	// 	t.Errorf("ERROR! Expected: %v | Result: %v", expected, result1)
+	// }
+
 }
