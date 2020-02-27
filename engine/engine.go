@@ -3,8 +3,8 @@ package engine
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -100,7 +100,7 @@ func Arbitrage(pair string, markets *[]market.Market) {
 						(*markets)[i].TakerFee = takerFee
 						return
 					}
-					log.Println("Unable to retrieve KRAKEN data ", err)
+					zap.S().Warnf("Unable to retrieve KRAKEN data: %s", err.Error)
 				}
 				toRemove = append(toRemove, i)
 			}(i, &wg)
@@ -122,7 +122,7 @@ func Arbitrage(pair string, markets *[]market.Market) {
 						(*markets)[i].TakerFee = takerFee
 						return
 					}
-					log.Println("Unable to retrieve OKCOIN data ", err)
+					zap.S().Warnf("Unable to retrieve OKCOIN data: %s", err.Error)
 				}
 				toRemove = append(toRemove, i)
 			}(i, &wg)
@@ -144,7 +144,7 @@ func Arbitrage(pair string, markets *[]market.Market) {
 						(*markets)[i].TakerFee = takerFee
 						return
 					}
-					log.Println("Unable to retrieve BITFINEX data ", err)
+					zap.S().Warnf("Unable to retrieve BITFINEX data: %s", err.Error)
 				}
 				toRemove = append(toRemove, i)
 			}(i, &wg)
@@ -165,13 +165,15 @@ func Arbitrage(pair string, markets *[]market.Market) {
 						(*markets)[i].TakerFee = takerFee
 						return
 					}
-					log.Println("Unable to retrieve GEMINI data: ", err)
+					zap.S().Warnf("Unable to retrieve GEMINI data: %s", err.Error)
 				}
 				toRemove = append(toRemove, i)
 			}(i, &wg)
 		}
 	}
 	wg.Wait()
+	// Need to sort due to the concurrency
+	sort.Ints(toRemove)
 	*markets = utils.RemoveMarket(*markets, toRemove)
 	zap.S().Info("Time execution: ", time.Since(start))
 

@@ -82,10 +82,11 @@ func ExtractCurrenciesFromPairs(pairs []string) []string {
 	return currencies
 }
 
-func RemoveMarket(m []market.Market, i []int) []market.Market {
-	for i := 0; i < len(m); i++ {
-		m = append(m[:i], m[i+1:]...)
-		i-- // Since we just deleted a[i], we must redo that index
+func RemoveMarket(m []market.Market, indexs []int) []market.Market {
+	var removed int = 0
+	for i := 0; i < len(indexs); i++ {
+		m = append(m[:indexs[i]-removed], m[indexs[i]-removed+1:]...)
+		removed++
 	}
 	return m
 }
