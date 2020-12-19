@@ -4,6 +4,7 @@ github.com/alessiosavi/GoGPUtils v0.0.25 h1:7Iuzuzbd6YHlgpEUTmjMaIYihwo//yNMZSiq
 github.com/alessiosavi/GoGPUtils v0.0.25/go.mod h1:DRI9kEkT/ZZdHr+ESFOMfqWPHsO9WgjzyVXdfOGN83M=
 github.com/alessiosavi/Requests v0.3.2 h1:uF+N04Warh2vYbMwmHcSQiCmkVLLPUbel/Ut0tNtECo=
 github.com/alessiosavi/Requests v0.3.2/go.mod h1:Ga9AidhlfraZqjpURZzsM+c1oqG4nxLv2EnEFtaJPAY=
+github.com/alessiosavi/Requests v0.3.7/go.mod h1:Ga9AidhlfraZqjpURZzsM+c1oqG4nxLv2EnEFtaJPAY=
 github.com/alessiosavi/ahocorasick v0.0.3/go.mod h1:GlX7JXZTgFoEccsMg5JZVpjoe+NW7Nk+3b5ldtGP5oU=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
