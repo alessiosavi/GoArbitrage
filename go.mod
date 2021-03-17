@@ -3,7 +3,7 @@ module github.com/alessiosavi/GoArbitrage
 go 1.13
 
 require (
-	github.com/alessiosavi/GoGPUtils v0.0.30
+	github.com/alessiosavi/GoGPUtils v0.0.45
 	github.com/alessiosavi/Requests v0.3.7
 	github.com/go-redis/redis/v7 v7.4.0
 	github.com/onrik/logrus v0.8.0 // indirect
