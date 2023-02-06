@@ -8,7 +8,7 @@ require (
 	github.com/go-redis/redis/v7 v7.4.0
 	github.com/onrik/logrus v0.8.0 // indirect
 	github.com/sirupsen/logrus v1.7.0 // indirect
-	github.com/tidwall/gjson v1.5.0 // indirect
+	github.com/tidwall/gjson v1.9.3 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.16.0
 	golang.org/x/lint v0.0.0-20200130185559-910be7a94367 // indirect
