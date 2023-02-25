@@ -12,7 +12,7 @@ require (
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.16.0
 	golang.org/x/lint v0.0.0-20200130185559-910be7a94367 // indirect
-	golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c // indirect
+	golang.org/x/sys v0.1.0 // indirect
 	golang.org/x/tools v0.0.0-20200221191710-57f3fb51f507 // indirect
 	honnef.co/go/tools v0.0.1-2020.1.2 // indirect
 )
